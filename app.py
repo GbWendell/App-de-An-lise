@@ -46,7 +46,7 @@ if file:
 
     # Lista de SKUs para "itens críticos"
     skus_criticos = [
-        "P0035", "P0018"
+        "P0035", "P0018", "11008874", "P0043", "11009087", "P0044", "P0051", "11008864", "P0045"
     ]
 
     # Remover SKUs excluídos
