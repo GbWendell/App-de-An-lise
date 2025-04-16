@@ -4,6 +4,61 @@ import matplotlib.pyplot as plt
 import io
 import streamlit_authenticator as stauth
 
+# --- Estilo customizado ---
+st.markdown("""
+    <style>
+        body {
+            background-color: #f5f7fa;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .main .block-container {
+            padding: 2rem 3rem;
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        }
+        h1 {
+            font-weight: 700;
+            color: #2c3e50;
+        }
+        .stButton>button {
+            border-radius: 12px;
+            background-color: #2c3e50;
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            transition: background-color 0.3s;
+        }
+        .stButton>button:hover {
+            background-color: #34495e;
+        }
+        .stDownloadButton>button {
+            border-radius: 8px;
+            background-color: #16a085;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            margin-right: 10px;
+        }
+        .stDownloadButton>button:hover {
+            background-color: #138d75;
+        }
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: none;
+            text-align: center;
+            padding: 10px 0;
+        }
+        .footer span {
+            font-size: 14px;
+            color: grey;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
 # --- Autenticação ---
 credentials = {
     "usernames": {
@@ -147,21 +202,8 @@ if autenticado:
             st.download_button("⬇️ Baixar Imagem da Tabela", output_img.getvalue(), file_name="tabela_destaque.png")
 
     st.markdown("""
-        <style>
-            .rodape {
-                position: fixed;
-                bottom: 0;
-                left: 50%;
-                transform: translateX(-50%);
-                padding: 10px;
-                font-size: 14px;
-                color: grey;
-                text-align: center;
-                width: 100%;
-            }
-        </style>
-        <div class='rodape'>
-            By Gabriel Wendell Menezes Santos
+        <div class="footer">
+            <span>By Gabriel Wendell Menezes Santos</span>
         </div>
     """, unsafe_allow_html=True)
 
