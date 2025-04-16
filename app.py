@@ -39,10 +39,37 @@ if file:
         "Valor Perda (R$)": "Valor da Perda (R$)"
     }, inplace=True)
 
-    df['SKU'] = df['SKU'].astype(str)
+    # Lista de SKUs para excluir
+    skus_excluir = [
+        "11002224", "11010158", "12000453", "12002641", "11000438", "PH11000004",
+        "11008978", "11001506", "22005281", "13009530", "P0076", "22005266",
+        "PROV0013", "PH12000010", "12002793", "12003381", "PH12000015", "P0066",
+        "12003440", "12003000", "12003521", "12003378", "12002976", "P0080",
+        "12003058", "12003232", "12003541"
+    ]
+
+    # Lista de SKUs para "itens críticos"
+    skus_criticos = [
+        "P0035", "P0036", "P0037", "P0038", "P0039", "P0040", "P0041", "P0042", "P0043"
+    ]
+
+    # Remover SKUs excluídos
+    df['SKU'] = df['SKU'].astype(str).str.replace(" ", "")  # Remover espaços dos SKUs
+    df = df[~df['SKU'].isin(skus_excluir)]  # Excluir os SKUs indesejados
+
+    # Filtrar SKUs disponíveis
     skus = sorted(df['SKU'].dropna().unique())
 
-    skus_selecionados = st.multiselect("🔍 Selecione os SKUs que deseja filtrar", skus)
+    # Adicionar "itens críticos" no filtro
+    itens_criticos = df[df['SKU'].isin(skus_criticos)]
+    skus_criticos = sorted(itens_criticos['SKU'].dropna().unique())
+
+    # Exibir SKUs para o filtro
+    skus_selecionados = st.multiselect(
+        "🔍 Selecione os SKUs que deseja filtrar (incluindo Itens Críticos)",
+        skus,
+        default=skus_criticos  # Iniciar o filtro com os itens críticos
+    )
 
     if skus_selecionados:
         colunas_desejadas = [
@@ -69,7 +96,7 @@ if file:
         )
 
         # Aumentar largura da coluna "Produto" (índice 1)
-        col_widths = {1: 0.3}
+        col_widths = {1: 2.3}
         for (row, col), cell in table.get_celld().items():
             if col in col_widths:
                 cell.set_width(col_widths[col])
@@ -81,7 +108,7 @@ if file:
                 table[(i + 1, j)].set_facecolor(cor)
 
         table.auto_set_font_size(False)
-        table.set_fontsize(9.5)
+        table.set_fontsize(9.0)
         table.scale(1.2, 1.5)
 
         st.pyplot(fig)
