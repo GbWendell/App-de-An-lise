@@ -71,16 +71,19 @@ if autenticado:
 
         df['SKU'] = df['SKU'].astype(str).str.replace(" ", "")
 
-        skus_criticos = ["P0035", "P0018", "11008874", "P0043", "11009087", "P0044", "P0051", "11008864", "P0045"]
+        skus_criticos = [""P0035", "P0018", "11008874", "P0043", "11009087", "P0044", "P0051", "11008864", "P0045""]
         skus_todos = ["11009706"]
 
-        exibir_criticos = st.checkbox("Exibir apenas Itens Críticos")
-        exibir_todos = st.checkbox("Exibir apenas Todos os Itens")
+        exibir_criticos = st.checkbox("Exibir Itens Críticos")
+        exibir_todos = st.checkbox("Exibir Todos os Itens")
 
-        if exibir_criticos:
-            df_filtrado = df[df['SKU'].isin(skus_criticos)]
-        elif exibir_todos:
-            df_filtrado = df[df['SKU'].isin(skus_todos)]
+        if exibir_criticos or exibir_todos:
+            skus_filtrados = set()
+            if exibir_criticos:
+                skus_filtrados.update(skus_criticos)
+            if exibir_todos:
+                skus_filtrados.update(skus_todos)
+            df_filtrado = df[df['SKU'].isin(skus_filtrados)]
         else:
             termo_busca = st.text_input("🔍 Buscar por SKU ou Nome do Produto").strip().lower()
             if termo_busca:
@@ -89,7 +92,7 @@ if autenticado:
                     df['Produto'].str.lower().str.contains(termo_busca)
                 ]
             else:
-                df_filtrado = pd.DataFrame()  # vazio enquanto nada for buscado
+                df_filtrado = pd.DataFrame()
 
         if not df_filtrado.empty:
             colunas_desejadas = [
