@@ -23,7 +23,7 @@ st.markdown("""
         .stButton > button:hover {
             background-color: #27ae60;
         }
-        /* Estilo do Rodapé fixado no fundo */
+        /* Estilo do Rodapé fixado no fundo e centralizado */
         .footer {
             position: fixed;
             bottom: 0;
@@ -186,9 +186,10 @@ elif autenticado is False:
 elif autenticado is None:
     st.warning("🕵️ Por favor, insira seu login.")
 
-# --- Rodapé fixado no final da página ---
+# --- Rodapé fixado no fundo e centralizado ---
 st.markdown("""
     <div class="footer">
         ⓘ By <strong>Gabriel Wendell Menezes Santos</strong> — Todos os direitos reservados.
     </div>
 """, unsafe_allow_html=True)
+
