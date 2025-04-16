@@ -69,7 +69,7 @@ if file:
         )
 
         # Aumentar largura da coluna "Produto" (índice 1)
-        col_widths = {1: 1.0}
+        col_widths = {1: 0.5}
         for (row, col), cell in table.get_celld().items():
             if col in col_widths:
                 cell.set_width(col_widths[col])
