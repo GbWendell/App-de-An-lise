@@ -67,11 +67,18 @@ if file:
         # Se marcar, mostra apenas os itens críticos
         skus_selecionados = skus_criticos
     else:
-        # Caso contrário, mostra todos os SKUs
-        skus_selecionados = st.multiselect(
-            "🔍 Selecione os SKUs que deseja filtrar",
-            skus
-        )
+        # Checkbox para "Exibir todos exceto os excluídos"
+        exibir_sem_excluidos = st.checkbox("Exibir todos os itens, exceto os excluídos", value=False)
+
+        if exibir_sem_excluidos:
+            # Mostrar todos os itens, menos os excluídos
+            skus_selecionados = skus  # Todos os SKUs disponíveis, exceto os excluídos
+        else:
+            # Caso contrário, mostra todos os SKUs
+            skus_selecionados = st.multiselect(
+                "🔍 Selecione os SKUs que deseja filtrar",
+                skus
+            )
 
     if skus_selecionados:
         colunas_desejadas = [
