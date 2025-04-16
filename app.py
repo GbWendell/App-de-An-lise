@@ -39,17 +39,8 @@ if file:
         "Valor Perda (R$)": "Valor da Perda (R$)"
     }, inplace=True)
 
-df['SKU'] = df['SKU'].astype(str).str.replace(" ", "")
-
-skus_excluir = [
-    "11002224", "11010158", "12000453", "12002641", "11000438", "PH11000004",
-    "11008978", "11001506", "22005281", "13009530", "P0076", "22005266",
-    "PROV0013", "PH12000010", "12002793", "12003381", "PH12000015", "P0066",
-    "12003440", "12003000", "12003521", "12003378", "12002976", "P0080",
-    "12003058", "12003232", "12003541"
-]
-
-df = df[~df['SKU'].isin(skus_excluir)]
+    df['SKU'] = df['SKU'].astype(str)
+    skus = sorted(df['SKU'].dropna().unique())
 
     skus_selecionados = st.multiselect("🔍 Selecione os SKUs que deseja filtrar", skus)
 
@@ -78,7 +69,7 @@ df = df[~df['SKU'].isin(skus_excluir)]
         )
 
         # Aumentar largura da coluna "Produto" (índice 1)
-        col_widths = {1: 0.2}
+        col_widths = {1: 0.3}
         for (row, col), cell in table.get_celld().items():
             if col in col_widths:
                 cell.set_width(col_widths[col])
