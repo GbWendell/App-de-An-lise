@@ -99,7 +99,7 @@ if file:
         )
 
         # Ajustar largura da coluna "Produto" (índice 1)
-        col_widths = {1: 0.3}
+        col_widths = {1: 2.3}
         for (row, col), cell in table.get_celld().items():
             if col in col_widths:
                 cell.set_width(col_widths[col])
@@ -123,4 +123,5 @@ if file:
         output_img = io.BytesIO()
         fig.savefig(output_img, format='png', dpi=200)
         st.download_button("⬇️ Baixar Imagem da Tabela", output_img.getvalue(), file_name="tabela_destaque.png")
+
 
