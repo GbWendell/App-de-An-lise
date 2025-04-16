@@ -8,7 +8,7 @@ import streamlit_authenticator as stauth
 credentials = {
     "usernames": {
         "admin": {
-            "name": "Gabriel Wendell",
+            "name": "Gabriel Wendell",  # Nome personalizado
             "password": stauth.Hasher(["1234"]).generate()[0]
         },
         "usuario": {
@@ -31,21 +31,22 @@ if autenticado:
     autenticador.logout("Logout", "sidebar")
     st.sidebar.success(f"Bem-vindo, {nome}!")
 
-    # --- App principal ---
+    # --- Estilo moderno ---
     st.markdown("""
         <style>
-            .main {
-                background-color: #f9f9f9;
-            }
-            .css-18e3th9 {
-                padding: 2rem;
-                border-radius: 10px;
-                background-color: white;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            }
+        .block-container {
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+            padding-left: 3rem;
+            padding-right: 3rem;
+        }
+        .stCheckbox > div {
+            padding: 0.5rem;
+        }
         </style>
     """, unsafe_allow_html=True)
 
+    # --- App principal ---
     st.title("📦 Filtro de Dispersão de Produtos")
 
     def get_color(value, col_name):
@@ -89,20 +90,20 @@ if autenticado:
         exibir_criticos = st.checkbox("Exibir Itens Críticos")
         exibir_todos = st.checkbox("Exibir Todos os Itens")
 
-        if exibir_criticos or exibir_todos:
-            skus_selecionados = set()
-            if exibir_criticos:
-                skus_selecionados.update(skus_criticos)
-            if exibir_todos:
-                skus_selecionados.update(skus_todos)
+        skus_final = []
+        if exibir_criticos:
+            skus_final.extend([sku for sku in df['SKU'].unique() if sku in skus_criticos])
+        if exibir_todos:
+            skus_final.extend([sku for sku in df['SKU'].unique() if sku in skus_todos])
 
+        if skus_final:
             colunas_desejadas = [
                 "SKU", "Produto", "Contagem Inicial", "Compras", "Desp. Completo",
                 "Desp. Incompleto", "Vendas", "Total", "Contagem Atual",
                 "Perda Operacional", "Valor da Perda (R$)"
             ]
 
-            df_final = df[df['SKU'].isin(skus_selecionados)][colunas_desejadas].copy()
+            df_final = df[df['SKU'].isin(skus_final)][colunas_desejadas].copy()
 
             for col in df_final.columns[2:]:
                 df_final[col] = df_final[col].astype(str).str.replace(",", ".").astype(float)
