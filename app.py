@@ -74,16 +74,13 @@ if autenticado:
         skus_criticos = ["P0035", "P0018", "11008874", "P0043", "11009087", "P0044", "P0051", "11008864", "P0045"]
         skus_todos = ["11009706"]
 
-        skus = sorted(df['SKU'].dropna().unique())
-
         exibir_criticos = st.checkbox("Exibir apenas Itens Críticos")
         exibir_todos = st.checkbox("Exibir apenas Todos os Itens")
 
-        # NOVO: Busca por SKU ou Produto
         if exibir_criticos:
-            skus_selecionados = [sku for sku in skus if sku in skus_criticos]
+            df_filtrado = df[df['SKU'].isin(skus_criticos)]
         elif exibir_todos:
-            skus_selecionados = [sku for sku in skus if sku in skus_todos]
+            df_filtrado = df[df['SKU'].isin(skus_todos)]
         else:
             termo_busca = st.text_input("🔍 Buscar por SKU ou Nome do Produto").strip().lower()
             if termo_busca:
@@ -91,17 +88,16 @@ if autenticado:
                     df['SKU'].str.lower().str.contains(termo_busca) |
                     df['Produto'].str.lower().str.contains(termo_busca)
                 ]
-                skus_selecionados = df_filtrado['SKU'].unique().tolist()
             else:
-                skus_selecionados = st.multiselect("Selecione os SKUs que deseja filtrar", skus)
+                df_filtrado = pd.DataFrame()  # vazio enquanto nada for buscado
 
-        if skus_selecionados:
+        if not df_filtrado.empty:
             colunas_desejadas = [
                 "SKU", "Produto", "Contagem Inicial", "Compras", "Desp. Completo",
                 "Desp. Incompleto", "Vendas", "Total", "Contagem Atual",
                 "Perda Operacional", "Valor da Perda (R$)"
             ]
-            df_final = df[df['SKU'].isin(skus_selecionados)][colunas_desejadas].copy()
+            df_final = df_filtrado[colunas_desejadas].copy()
 
             for col in df_final.columns[2:]:
                 df_final[col] = df_final[col].astype(str).str.replace(",", ".").astype(float)
