@@ -5,7 +5,6 @@ import io
 import streamlit_authenticator as stauth
 
 # --- Autenticação ---
-
 credentials = {
     "usernames": {
         "admin": {
@@ -32,29 +31,9 @@ if autenticado:
     autenticador.logout("Logout", "sidebar")
     st.sidebar.success(f"Bem-vindo, {nome}!")
 
-    # --- Estilo moderno ---
     st.markdown("""
-        <style>
-            .main {
-                background-color: #f5f7fa;
-                padding: 20px;
-                font-family: 'Arial';
-            }
-            h1 {
-                color: #1f77b4;
-                text-align: center;
-            }
-            .footer {
-                position: fixed;
-                left: 10px;
-                bottom: 10px;
-                font-size: 12px;
-                color: gray;
-            }
-        </style>
+        <h1 style='text-align: center;'>📦 Filtro de Dispersão de Produtos</h1>
     """, unsafe_allow_html=True)
-
-    st.title("📦 Filtro de Dispersão de Produtos")
 
     def get_color(value, col_name):
         if col_name in ["Contagem Inicial", "Compras", "Total"]:
@@ -94,32 +73,23 @@ if autenticado:
         skus_criticos = ["P0035", "P0018", "11008874", "P0043", "11009087", "P0044", "P0051", "11008864", "P0045"]
         skus_todos = ["11009706"]
 
-        skus = sorted(df['SKU'].dropna().unique())
-
-        # Checkboxes
         exibir_criticos = st.checkbox("Exibir Itens Críticos")
         exibir_todos = st.checkbox("Exibir Todos os Itens")
 
-        # Campo de busca
-        termo_busca = st.text_input("🔎 Buscar por SKU ou Nome do Produto")
+        pesquisa = st.text_input("🔍 Pesquisar por SKU ou Nome do Produto")
 
-        # Lógica de seleção
-        skus_filtrados = set()
+        df_filtrado = pd.DataFrame()
+
         if exibir_criticos:
-            skus_filtrados.update(skus_criticos)
+            df_filtrado = df[df['SKU'].isin(skus_criticos)]
+
         if exibir_todos:
-            skus_filtrados.update(skus_todos)
-        if not skus_filtrados:
-            skus_filtrados = set(skus)
+            df_filtrado = pd.concat([df_filtrado, df[df['SKU'].isin(skus_todos)]])
 
-        df_filtrado = df[df['SKU'].isin(skus_filtrados)].copy()
-
-        if termo_busca:
-            termo_busca = termo_busca.lower()
-            df_filtrado = df_filtrado[df_filtrado.apply(
-                lambda row: termo_busca in str(row['SKU']).lower() or termo_busca in str(row['Produto']).lower(),
-                axis=1
-            )]
+        if pesquisa:
+            pesquisa = pesquisa.lower()
+            resultado_pesquisa = df[df['SKU'].str.lower().str.contains(pesquisa) | df['Produto'].str.lower().str.contains(pesquisa)]
+            df_filtrado = pd.concat([df_filtrado, resultado_pesquisa])
 
         if not df_filtrado.empty:
             colunas_desejadas = [
@@ -130,7 +100,7 @@ if autenticado:
             df_final = df_filtrado[colunas_desejadas].copy()
 
             for col in df_final.columns[2:]:
-                df_final[col] = pd.to_numeric(df_final[col].astype(str).str.replace(",", ".", regex=False), errors='coerce')
+                df_final[col] = pd.to_numeric(df_final[col].astype(str).str.replace(",", "."), errors='coerce')
 
             st.success("✅ Tabela filtrada com sucesso!")
             st.dataframe(df_final)
@@ -144,6 +114,11 @@ if autenticado:
                 loc='center',
                 cellLoc='center'
             )
+
+            col_widths = {1: 0.3}
+            for (row, col), cell in table.get_celld().items():
+                if col in col_widths:
+                    cell.set_width(col_widths[col])
 
             for i in range(len(df_final)):
                 for j, col_name in enumerate(df_final.columns):
@@ -165,11 +140,10 @@ if autenticado:
             fig.savefig(output_img, format='png', dpi=200)
             st.download_button("⬇️ Baixar Imagem da Tabela", output_img.getvalue(), file_name="tabela_destaque.png")
 
-        else:
-            st.warning("Nenhum item encontrado com os filtros atuais.")
-
     st.markdown("""
-        <div class="footer">By Gabriel Wendell Menezes Santos</div>
+        <div style='position: fixed; bottom: 0; left: 0; padding: 10px;'>
+            <span style='font-size: 14px; color: grey;'>By Gabriel Wendell Menezes Santos</span>
+        </div>
     """, unsafe_allow_html=True)
 
 elif autenticado is False:
