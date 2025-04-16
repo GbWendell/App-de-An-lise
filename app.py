@@ -4,53 +4,11 @@ import matplotlib.pyplot as plt
 import io
 import streamlit_authenticator as stauth
 
-# --- Estilo do topo ---
-st.markdown("""
-    <style>
-        .main {background-color: #f5f7fa;}
-        .block-container {padding-top: 2rem;}
-        h1 {color: #2c3e50;}
-        .stCheckbox {margin-top: 0.5rem;}
-        .css-1v3fvcr, .stTextInput, .stButton > button {
-            font-size: 16px;
-        }
-        .stButton > button {
-            background-color: #2ecc71;
-            color: white;
-            font-weight: bold;
-            border-radius: 8px;
-        }
-        .stButton > button:hover {
-            background-color: #27ae60;
-        }
-        /* Estilo para centralizar o conteúdo */
-        .centralizado {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 80vh;  /* Ajuste para centralizar no meio da tela */
-            text-align: center;
-            flex-direction: column;
-        }
-        /* Rodapé à esquerda */
-        .footer {
-            position: fixed;
-            bottom: 10px;
-            left: 10px;
-            color: #888888;
-            font-size: 14px;
-            background-color: #FFFFFF;
-            padding: 0.5rem;
-            z-index: 9999;
-        }
-    </style>
-""", unsafe_allow_html=True)
-
-# --- Autenticação ---
+# --- Autenticação com estrutura nova ---
 credentials = {
     "usernames": {
         "admin": {
-            "name": "Gabriel Wendell",  # Nome personalizado
+            "name": "Gabriel Wendell",
             "password": stauth.Hasher(["1234"]).generate()[0]
         },
         "usuario": {
@@ -67,16 +25,14 @@ autenticador = stauth.Authenticate(
     cookie_expiry_days=1
 )
 
-nome, autenticado, usuario = autenticador.login("🔐 Login", "main")
+nome, autenticado, usuario = autenticador.login("Login", "main")
 
 if autenticado:
-    autenticador.logout("🚪 Logout", "sidebar")
-    st.sidebar.markdown("## 👤 Usuário")
-    st.sidebar.success(f"Bem-vindo, {nome}!")
+    autenticador.logout("Logout", "sidebar")
+    st.sidebar.success(f"Bem-vindo, Gabriel Wendell!")
 
     # --- App principal ---
-    st.markdown("## 📦 Filtro de Dispersão de Produtos")
-    st.markdown("---")
+    st.title("📦 Filtro de Dispersão de Produtos")
 
     def get_color(value, col_name):
         if col_name in ["Contagem Inicial", "Compras", "Total"]:
@@ -119,28 +75,21 @@ if autenticado:
                      "P0061", "P0063", "P0064", "12002606", "12002608", "P0079", "P0007", "P0025", "11008881", "P0003", "P0040", "P0042", "85", "109",
                      "P0001", "11008998", "11008997", "P0010", "11009221", "11008888"]
 
-        col1, col2 = st.columns(2)
-        with col1:
-            exibir_criticos = st.checkbox("🚨 Exibir Itens Críticos")
-        with col2:
-            exibir_todos = st.checkbox("📋 Exibir Todos os Itens")
+        termo_busca = st.text_input("🔍 Buscar por SKU ou Nome do Produto").strip().lower()
+        exibir_criticos = st.checkbox("Exibir Itens Críticos")
+        exibir_todos = st.checkbox("Exibir Todos os Itens")
 
-        if exibir_criticos or exibir_todos:
-            skus_filtrados = set()
-            if exibir_criticos:
-                skus_filtrados.update(skus_criticos)
-            if exibir_todos:
-                skus_filtrados.update(skus_todos)
-            df_filtrado = df[df['SKU'].isin(skus_filtrados)]
-        else:
-            termo_busca = st.text_input("🔍 Buscar por SKU ou Nome do Produto").strip().lower()
-            if termo_busca:
-                df_filtrado = df[
-                    df['SKU'].str.lower().str.contains(termo_busca) |
-                    df['Produto'].str.lower().str.contains(termo_busca)
-                ]
-            else:
-                df_filtrado = pd.DataFrame()
+        df_filtrado = df.copy()
+
+        if termo_busca:
+            df_filtrado = df_filtrado[
+                df_filtrado['SKU'].str.contains(termo_busca, case=False, na=False) |
+                df_filtrado['Produto'].str.lower().str.contains(termo_busca, na=False)
+            ]
+
+        if exibir_criticos and exibir_todos:
+            skus_filtrar = list(set(skus_criticos + skus_todos))
+            df_filtrado = df_filtrado[df_filtrado['SKU'].isin(skus_filtrar)]
 
         if not df_filtrado.empty:
             colunas_desejadas = [
@@ -151,7 +100,7 @@ if autenticado:
             df_final = df_filtrado[colunas_desejadas].copy()
 
             for col in df_final.columns[2:]:
-                df_final[col] = df_final[col].astype(str).str.replace(",", ".").astype(float)
+                df_final[col] = pd.to_numeric(df_final[col].astype(str).str.replace(",", "."), errors='coerce').fillna(0)
 
             st.success("✅ Tabela filtrada com sucesso!")
             st.dataframe(df_final)
@@ -189,18 +138,25 @@ if autenticado:
 
             output_img = io.BytesIO()
             fig.savefig(output_img, format='png', dpi=200)
-            st.download_button("🖼️ Baixar Imagem da Tabela", output_img.getvalue(), file_name="tabela_destaque.png")
+            st.download_button("⬇️ Baixar Imagem da Tabela", output_img.getvalue(), file_name="tabela_destaque.png")
         else:
             st.info("🔎 Nenhum item encontrado. Marque um filtro ou digite algo para buscar.")
 
-elif autenticado is False:
-    st.error("❌ Usuário ou senha inválidos.")
-elif autenticado is None:
-    st.warning("🕵️ Por favor, insira seu login.")
+    st.markdown("""
+        <style>
+            .footer {
+                position: fixed;
+                left: 0;
+                bottom: 0;
+                padding: 10px;
+                color: gray;
+                font-size: 12px;
+            }
+        </style>
+        <div class="footer">By Gabriel Wendell Menezes Santos</div>
+    """, unsafe_allow_html=True)
 
-# --- Rodapé fixado no canto inferior esquerdo ---
-st.markdown("""
-    <div class="footer">
-        ⓘ By <strong>Gabriel Wendell Menezes Santos</strong> — Todos os direitos reservados.
-    </div>
-""", unsafe_allow_html=True)
+elif autenticado is False:
+    st.error("Usuário ou senha inválidos.")
+elif autenticado is None:
+    st.warning("Por favor, insira seu login.")
