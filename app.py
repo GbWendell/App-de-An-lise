@@ -79,12 +79,21 @@ if autenticado:
         exibir_criticos = st.checkbox("Exibir apenas Itens Críticos")
         exibir_todos = st.checkbox("Exibir apenas Todos os Itens")
 
+        # NOVO: Busca por SKU ou Produto
         if exibir_criticos:
             skus_selecionados = [sku for sku in skus if sku in skus_criticos]
         elif exibir_todos:
             skus_selecionados = [sku for sku in skus if sku in skus_todos]
         else:
-            skus_selecionados = st.multiselect("🔍 Selecione os SKUs que deseja filtrar", skus)
+            termo_busca = st.text_input("🔍 Buscar por SKU ou Nome do Produto").strip().lower()
+            if termo_busca:
+                df_filtrado = df[
+                    df['SKU'].str.lower().str.contains(termo_busca) |
+                    df['Produto'].str.lower().str.contains(termo_busca)
+                ]
+                skus_selecionados = df_filtrado['SKU'].unique().tolist()
+            else:
+                skus_selecionados = st.multiselect("Selecione os SKUs que deseja filtrar", skus)
 
         if skus_selecionados:
             colunas_desejadas = [
