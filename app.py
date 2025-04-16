@@ -60,10 +60,6 @@ if file:
     # Filtrar SKUs disponíveis
     skus = sorted(df['SKU'].dropna().unique())
 
-    # Adicionar "itens críticos" no filtro
-    itens_criticos = df[df['SKU'].isin(skus_criticos)]
-    skus_criticos = sorted(itens_criticos['SKU'].dropna().unique())
-
     # Checkbox para selecionar "itens críticos"
     exibir_criticos = st.checkbox("Exibir apenas Itens Críticos", value=False)
 
@@ -74,8 +70,7 @@ if file:
         # Caso contrário, mostra todos os SKUs
         skus_selecionados = st.multiselect(
             "🔍 Selecione os SKUs que deseja filtrar",
-            skus,
-            default=skus_criticos  # Iniciar com os itens críticos
+            skus
         )
 
     if skus_selecionados:
