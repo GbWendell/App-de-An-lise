@@ -23,16 +23,25 @@ st.markdown("""
         .stButton > button:hover {
             background-color: #27ae60;
         }
-        /* Estilo do Rodapé fixado no fundo e centralizado */
+        /* Estilo para centralizar o conteúdo */
+        .centralizado {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 80vh;  /* Ajuste para centralizar no meio da tela */
+            text-align: center;
+            flex-direction: column;
+        }
+        /* Rodapé à direita */
         .footer {
             position: fixed;
-            bottom: 0;
-            width: 100%;
-            background-color: #f5f7fa;
-            text-align: center;
-            padding: 1rem 0;
+            bottom: 10px;
+            right: 10px;
             color: #888888;
             font-size: 14px;
+            background-color: #f5f7fa;
+            padding: 0.5rem;
+            z-index: 9999;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -186,7 +195,7 @@ elif autenticado is False:
 elif autenticado is None:
     st.warning("🕵️ Por favor, insira seu login.")
 
-# --- Rodapé fixado no fundo e centralizado ---
+# --- Rodapé fixado no canto inferior direito ---
 st.markdown("""
     <div class="footer">
         ⓘ By <strong>Gabriel Wendell Menezes Santos</strong> — Todos os direitos reservados.
