@@ -39,10 +39,8 @@ if file:
         "Valor Perda (R$)": "Valor da Perda (R$)"
     }, inplace=True)
 
-    # Normalizar SKUs e remover espaços
 df['SKU'] = df['SKU'].astype(str).str.replace(" ", "")
 
-# Lista de SKUs que não devem aparecer no filtro
 skus_excluir = [
     "11002224", "11010158", "12000453", "12002641", "11000438", "PH11000004",
     "11008978", "11001506", "22005281", "13009530", "P0076", "22005266",
@@ -51,10 +49,8 @@ skus_excluir = [
     "12003058", "12003232", "12003541"
 ]
 
-# Filtrar os SKUs válidos
 df = df[~df['SKU'].isin(skus_excluir)]
 
-# Obter os SKUs para seleção no filtro
 skus = sorted(df['SKU'].dropna().unique())
 
     skus_selecionados = st.multiselect("🔍 Selecione os SKUs que deseja filtrar", skus)
