@@ -41,7 +41,11 @@ if file:
 
     # Lista de SKUs para excluir
     skus_excluir = [
-        "11002224"
+        "11002224", "11010158", "12000453", "12002641", "11000438", "PH11000004",
+        "11008978", "11001506", "22005281", "13009530", "P0076", "22005266",
+        "PROV0013", "PH12000010", "12002793", "12003381", "PH12000015", "P0066",
+        "12003440", "12003000", "12003521", "12003378", "12002976", "P0080",
+        "12003058", "12003232", "12003541"
     ]
 
     # Lista de SKUs para "itens críticos"
@@ -56,10 +60,6 @@ if file:
     # Filtrar SKUs disponíveis
     skus = sorted(df['SKU'].dropna().unique())
 
-    # Adicionar "itens críticos" no filtro
-    itens_criticos = df[df['SKU'].isin(skus_criticos)]
-    skus_criticos = sorted(itens_criticos['SKU'].dropna().unique())
-
     # Checkbox para selecionar "itens críticos"
     exibir_criticos = st.checkbox("Exibir apenas Itens Críticos", value=False)
 
@@ -67,11 +67,11 @@ if file:
         # Se marcar, mostra apenas os itens críticos
         skus_selecionados = skus_criticos
     else:
-        # Caso contrário, mostra todos os SKUs
+        # Caso contrário, mostra todos os SKUs, menos os excluídos
         skus_selecionados = st.multiselect(
             "🔍 Selecione os SKUs que deseja filtrar",
             skus,
-            default=skus_criticos  # Iniciar com os itens críticos
+            default=skus  # Exibir todos os SKUs por padrão
         )
 
     if skus_selecionados:
