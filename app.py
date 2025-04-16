@@ -93,3 +93,34 @@ if file:
 
         table = ax.table(
             cellText=df_final.values,
+            colLabels=df_final.columns,
+            loc='center',
+            cellLoc='center'
+        )
+
+        # Ajustar largura da coluna "Produto" (índice 1)
+        col_widths = {1: 0.3}
+        for (row, col), cell in table.get_celld().items():
+            if col in col_widths:
+                cell.set_width(col_widths[col])
+
+        for i in range(len(df_final)):
+            for j, col_name in enumerate(df_final.columns):
+                valor = df_final.iloc[i][col_name]
+                cor = get_color(valor, col_name)
+                table[(i + 1, j)].set_facecolor(cor)
+
+        table.auto_set_font_size(False)
+        table.set_fontsize(9.0)
+        table.scale(1.2, 1.5)
+
+        st.pyplot(fig)
+
+        output_excel = io.BytesIO()
+        df_final.to_excel(output_excel, index=False)
+        st.download_button("⬇️ Baixar Excel", output_excel.getvalue(), file_name="dispersao_filtrada.xlsx")
+
+        output_img = io.BytesIO()
+        fig.savefig(output_img, format='png', dpi=200)
+        st.download_button("⬇️ Baixar Imagem da Tabela", output_img.getvalue(), file_name="tabela_destaque.png")
+
