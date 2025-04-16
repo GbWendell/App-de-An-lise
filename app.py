@@ -71,7 +71,7 @@ if autenticado:
 
         df['SKU'] = df['SKU'].astype(str).str.replace(" ", "")
 
-        skus_criticos = [""P0035", "P0018", "11008874", "P0043", "11009087", "P0044", "P0051", "11008864", "P0045""]
+        skus_criticos = [""P0035", "P0018", "11008874", "P0043", "11009087", "P0044", "P0051", "11008864", "P0045"]
         skus_todos = ["11009706"]
 
         exibir_criticos = st.checkbox("Exibir Itens Críticos")
