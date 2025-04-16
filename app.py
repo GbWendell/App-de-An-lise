@@ -3,9 +3,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import io
 
+# Configuração da página
 st.set_page_config(page_title="Filtro de Dispersão", layout="wide")
 st.title("📦 Filtro de Dispersão de Produtos")
 
+# Função para aplicar cores nas células
 def get_color(value, col_name):
     if col_name in ["Contagem Inicial", "Compras", "Total"]:
         return "lightgreen"
@@ -22,10 +24,14 @@ def get_color(value, col_name):
     else:
         return "white"
 
+# Upload do arquivo Excel
 file = st.file_uploader("📁 Envie a planilha de Dispersão (Excel)", type=["xlsx"])
 
 if file:
+    # Leitura da planilha
     df = pd.read_excel(file, header=2)
+
+    # Renomear colunas para facilitar
     df.rename(columns={
         "Nome": "Produto",
         "Cont. Inicial": "Contagem Inicial",
@@ -39,61 +45,49 @@ if file:
         "Valor Perda (R$)": "Valor da Perda (R$)"
     }, inplace=True)
 
-    # Lista de SKUs para excluir
-    skus_excluir = [
-        "11002224", "11010158", "12000453", "12002641", "11000438", "PH11000004",
-        "11008978", "11001506", "22005281", "13009530", "P0076", "22005266",
-        "PROV0013", "PH12000010", "12002793", "12003381", "PH12000015", "P0066",
-        "12003440", "12003000", "12003521", "12003378", "12002976", "P0080",
-        "12003058", "12003232", "12003541"
-    ]
+    # Normalizar SKUs (remover espaços)
+    df['SKU'] = df['SKU'].astype(str).str.replace(" ", "")
 
-    # Lista de SKUs para "itens críticos"
-    skus_criticos = [
-        "P0035", "P0018", "11008874", "P0043", "11009087", "P0044", "P0051", "11008864", "P0045"
-    ]
+    # Listas definidas manualmente
+    skus_criticos = ["P0035", "P0018", "11008874", "P0043", "11009087", "P0044", "P0051", "11008864", "P0045"]
+    skus_todos = ["11008900", "11010051"]  # Atualize conforme necessário
 
-    # Remover SKUs excluídos
-    df['SKU'] = df['SKU'].astype(str).str.replace(" ", "")  # Remover espaços dos SKUs
-    df = df[~df['SKU'].isin(skus_excluir)]  # Excluir os SKUs indesejados
-
-    # Filtrar SKUs disponíveis
+    # Lista de todos os SKUs disponíveis
     skus = sorted(df['SKU'].dropna().unique())
 
-    # Checkbox para selecionar "itens críticos"
-    exibir_criticos = st.checkbox("Exibir apenas Itens Críticos", value=False)
+    # Checkboxes de filtros rápidos
+    exibir_criticos = st.checkbox("Exibir apenas Itens Críticos")
+    exibir_todos = st.checkbox("Exibir apenas Todos os Itens")
 
+    # Definir os SKUs selecionados conforme as opções
     if exibir_criticos:
-        # Se marcar, mostra apenas os itens críticos
-        skus_selecionados = skus_criticos
+        skus_selecionados = [sku for sku in skus if sku in skus_criticos]
+    elif exibir_todos:
+        skus_selecionados = [sku for sku in skus if sku in skus_todos]
     else:
-        # Checkbox para "Exibir todos exceto os excluídos"
-        exibir_sem_excluidos = st.checkbox("Exibir todos os itens, exceto os excluídos", value=False)
+        skus_selecionados = st.multiselect(
+            "🔍 Selecione os SKUs que deseja filtrar",
+            skus
+        )
 
-        if exibir_sem_excluidos:
-            # Mostrar todos os itens, menos os excluídos
-            skus_selecionados = skus  # Todos os SKUs disponíveis, exceto os excluídos
-        else:
-            # Caso contrário, mostra todos os SKUs
-            skus_selecionados = st.multiselect(
-                "🔍 Selecione os SKUs que deseja filtrar",
-                skus
-            )
-
+    # Exibir dados se houver SKUs selecionados
     if skus_selecionados:
         colunas_desejadas = [
             "SKU", "Produto", "Contagem Inicial", "Compras", "Desp. Completo",
             "Desp. Incompleto", "Vendas", "Total", "Contagem Atual",
             "Perda Operacional", "Valor da Perda (R$)"
         ]
+
         df_final = df[df['SKU'].isin(skus_selecionados)][colunas_desejadas].copy()
 
+        # Corrigir separador decimal
         for col in df_final.columns[2:]:
             df_final[col] = df_final[col].astype(str).str.replace(",", ".").astype(float)
 
         st.success("✅ Tabela filtrada com sucesso!")
         st.dataframe(df_final)
 
+        # Criar tabela destacada com matplotlib
         fig, ax = plt.subplots(figsize=(15, 4))
         ax.axis('off')
 
@@ -104,7 +98,7 @@ if file:
             cellLoc='center'
         )
 
-        # Ajustar largura da coluna "Produto" (índice 1)
+        # Ajuste visual da tabela
         col_widths = {1: 0.3}
         for (row, col), cell in table.get_celld().items():
             if col in col_widths:
@@ -120,12 +114,15 @@ if file:
         table.set_fontsize(9.0)
         table.scale(1.2, 1.5)
 
+        # Mostrar a imagem
         st.pyplot(fig)
 
+        # Exportar Excel
         output_excel = io.BytesIO()
         df_final.to_excel(output_excel, index=False)
         st.download_button("⬇️ Baixar Excel", output_excel.getvalue(), file_name="dispersao_filtrada.xlsx")
 
+        # Exportar imagem
         output_img = io.BytesIO()
         fig.savefig(output_img, format='png', dpi=200)
         st.download_button("⬇️ Baixar Imagem da Tabela", output_img.getvalue(), file_name="tabela_destaque.png")
