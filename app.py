@@ -4,6 +4,39 @@ import matplotlib.pyplot as plt
 import io
 import streamlit_authenticator as stauth
 
+# --- Estilo do topo ---
+st.markdown("""
+    <style>
+        .main {background-color: #f5f7fa;}
+        .block-container {padding-top: 2rem;}
+        h1 {color: #2c3e50;}
+        .stCheckbox {margin-top: 0.5rem;}
+        .css-1v3fvcr, .stTextInput, .stButton > button {
+            font-size: 16px;
+        }
+        .stButton > button {
+            background-color: #2ecc71;
+            color: white;
+            font-weight: bold;
+            border-radius: 8px;
+        }
+        .stButton > button:hover {
+            background-color: #27ae60;
+        }
+        /* Estilo do Rodapé fixado no fundo */
+        .footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background-color: #f5f7fa;
+            text-align: center;
+            padding: 1rem 0;
+            color: #888888;
+            font-size: 14px;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
 # --- Autenticação ---
 credentials = {
     "usernames": {
@@ -25,29 +58,16 @@ autenticador = stauth.Authenticate(
     cookie_expiry_days=1
 )
 
-nome, autenticado, usuario = autenticador.login("Login", "main")
+nome, autenticado, usuario = autenticador.login("🔐 Login", "main")
 
 if autenticado:
-    autenticador.logout("Logout", "sidebar")
+    autenticador.logout("🚪 Logout", "sidebar")
+    st.sidebar.markdown("## 👤 Usuário")
     st.sidebar.success(f"Bem-vindo, {nome}!")
 
-    # --- Estilo moderno ---
-    st.markdown("""
-        <style>
-        .block-container {
-            padding-top: 2rem;
-            padding-bottom: 2rem;
-            padding-left: 3rem;
-            padding-right: 3rem;
-        }
-        .stCheckbox > div {
-            padding: 0.5rem;
-        }
-        </style>
-    """, unsafe_allow_html=True)
-
     # --- App principal ---
-    st.title("📦 Filtro de Dispersão de Produtos")
+    st.markdown("## 📦 Filtro de Dispersão de Produtos")
+    st.markdown("---")
 
     def get_color(value, col_name):
         if col_name in ["Contagem Inicial", "Compras", "Total"]:
@@ -87,23 +107,36 @@ if autenticado:
         skus_criticos = ["P0035", "P0018", "11008874", "P0043", "11009087", "P0044", "P0051", "11008864", "P0045"]
         skus_todos = ["11009706"]
 
-        exibir_criticos = st.checkbox("Exibir Itens Críticos")
-        exibir_todos = st.checkbox("Exibir Todos os Itens")
+        col1, col2 = st.columns(2)
+        with col1:
+            exibir_criticos = st.checkbox("🚨 Exibir Itens Críticos")
+        with col2:
+            exibir_todos = st.checkbox("📋 Exibir Todos os Itens")
 
-        skus_final = []
-        if exibir_criticos:
-            skus_final.extend([sku for sku in df['SKU'].unique() if sku in skus_criticos])
-        if exibir_todos:
-            skus_final.extend([sku for sku in df['SKU'].unique() if sku in skus_todos])
+        if exibir_criticos or exibir_todos:
+            skus_filtrados = set()
+            if exibir_criticos:
+                skus_filtrados.update(skus_criticos)
+            if exibir_todos:
+                skus_filtrados.update(skus_todos)
+            df_filtrado = df[df['SKU'].isin(skus_filtrados)]
+        else:
+            termo_busca = st.text_input("🔍 Buscar por SKU ou Nome do Produto").strip().lower()
+            if termo_busca:
+                df_filtrado = df[
+                    df['SKU'].str.lower().str.contains(termo_busca) |
+                    df['Produto'].str.lower().str.contains(termo_busca)
+                ]
+            else:
+                df_filtrado = pd.DataFrame()
 
-        if skus_final:
+        if not df_filtrado.empty:
             colunas_desejadas = [
                 "SKU", "Produto", "Contagem Inicial", "Compras", "Desp. Completo",
                 "Desp. Incompleto", "Vendas", "Total", "Contagem Atual",
                 "Perda Operacional", "Valor da Perda (R$)"
             ]
-
-            df_final = df[df['SKU'].isin(skus_final)][colunas_desejadas].copy()
+            df_final = df_filtrado[colunas_desejadas].copy()
 
             for col in df_final.columns[2:]:
                 df_final[col] = df_final[col].astype(str).str.replace(",", ".").astype(float)
@@ -144,17 +177,18 @@ if autenticado:
 
             output_img = io.BytesIO()
             fig.savefig(output_img, format='png', dpi=200)
-            st.download_button("⬇️ Baixar Imagem da Tabela", output_img.getvalue(), file_name="tabela_destaque.png")
-
-    # --- Rodapé personalizado ---
-    st.markdown("""
-        <hr style="margin-top: 50px; border: 1px solid #e6e6e6;">
-        <div style="text-align: center; color: #888888; font-size: 14px;">
-            ⓘ By <strong>Gabriel Wendell Menezes Santos</strong> — Todos os direitos reservados.
-        </div>
-    """, unsafe_allow_html=True)
+            st.download_button("🖼️ Baixar Imagem da Tabela", output_img.getvalue(), file_name="tabela_destaque.png")
+        else:
+            st.info("🔎 Nenhum item encontrado. Marque um filtro ou digite algo para buscar.")
 
 elif autenticado is False:
-    st.error("Usuário ou senha inválidos.")
+    st.error("❌ Usuário ou senha inválidos.")
 elif autenticado is None:
-    st.warning("Por favor, insira seu login.")
+    st.warning("🕵️ Por favor, insira seu login.")
+
+# --- Rodapé fixado no final da página ---
+st.markdown("""
+    <div class="footer">
+        ⓘ By <strong>Gabriel Wendell Menezes Santos</strong> — Todos os direitos reservados.
+    </div>
+""", unsafe_allow_html=True)
