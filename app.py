@@ -4,8 +4,29 @@ import matplotlib.pyplot as plt
 import io
 import streamlit_authenticator as stauth
 
-# --- Autenticação com estrutura nova ---
+# --- Estilo do topo ---
+st.markdown("""
+    <style>
+        .main {background-color: #f5f7fa;}
+        .block-container {padding-top: 2rem;}
+        h1 {color: #2c3e50;}
+        .stCheckbox {margin-top: 0.5rem;}
+        .css-1v3fvcr, .stTextInput, .stButton > button {
+            font-size: 16px;
+        }
+        .stButton > button {
+            background-color: #2ecc71;
+            color: white;
+            font-weight: bold;
+            border-radius: 8px;
+        }
+        .stButton > button:hover {
+            background-color: #27ae60;
+        }
+    </style>
+""", unsafe_allow_html=True)
 
+# --- Autenticação ---
 credentials = {
     "usernames": {
         "admin": {
@@ -26,15 +47,16 @@ autenticador = stauth.Authenticate(
     cookie_expiry_days=1
 )
 
-nome, autenticado, usuario = autenticador.login("Login", "main")
+nome, autenticado, usuario = autenticador.login("🔐 Login", "main")
 
 if autenticado:
-    autenticador.logout("Logout", "sidebar")
+    autenticador.logout("🚪 Logout", "sidebar")
+    st.sidebar.markdown("## 👤 Usuário")
     st.sidebar.success(f"Bem-vindo, {nome}!")
 
     # --- App principal ---
-
-    st.title("📦 Filtro de Dispersão de Produtos")
+    st.markdown("## 📦 Filtro de Dispersão de Produtos")
+    st.markdown("---")
 
     def get_color(value, col_name):
         if col_name in ["Contagem Inicial", "Compras", "Total"]:
@@ -74,8 +96,11 @@ if autenticado:
         skus_criticos = ["P0035", "P0018", "11008874", "P0043", "11009087", "P0044", "P0051", "11008864", "P0045"]
         skus_todos = ["11009706"]
 
-        exibir_criticos = st.checkbox("Exibir Itens Críticos")
-        exibir_todos = st.checkbox("Exibir Todos os Itens")
+        col1, col2 = st.columns(2)
+        with col1:
+            exibir_criticos = st.checkbox("🚨 Exibir Itens Críticos")
+        with col2:
+            exibir_todos = st.checkbox("📋 Exibir Todos os Itens")
 
         if exibir_criticos or exibir_todos:
             skus_filtrados = set()
@@ -141,9 +166,11 @@ if autenticado:
 
             output_img = io.BytesIO()
             fig.savefig(output_img, format='png', dpi=200)
-            st.download_button("⬇️ Baixar Imagem da Tabela", output_img.getvalue(), file_name="tabela_destaque.png")
+            st.download_button("🖼️ Baixar Imagem da Tabela", output_img.getvalue(), file_name="tabela_destaque.png")
+        else:
+            st.info("🔎 Nenhum item encontrado. Marque um filtro ou digite algo para buscar.")
 
 elif autenticado is False:
-    st.error("Usuário ou senha inválidos.")
+    st.error("❌ Usuário ou senha inválidos.")
 elif autenticado is None:
-    st.warning("Por favor, insira seu login.")
+    st.warning("🕵️ Por favor, insira seu login.")
