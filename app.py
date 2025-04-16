@@ -147,8 +147,21 @@ if autenticado:
             st.download_button("⬇️ Baixar Imagem da Tabela", output_img.getvalue(), file_name="tabela_destaque.png")
 
     st.markdown("""
-        <div style='position: fixed; bottom: 0; left: 0; padding: 10px;'>
-            <span style='font-size: 14px; color: grey;'>By Gabriel Wendell Menezes Santos</span>
+        <style>
+            .rodape {
+                position: fixed;
+                bottom: 0;
+                left: 50%;
+                transform: translateX(-50%);
+                padding: 10px;
+                font-size: 14px;
+                color: grey;
+                text-align: center;
+                width: 100%;
+            }
+        </style>
+        <div class='rodape'>
+            By Gabriel Wendell Menezes Santos
         </div>
     """, unsafe_allow_html=True)
 
