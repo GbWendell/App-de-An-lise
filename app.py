@@ -58,7 +58,7 @@ if file:
         st.success("✅ Tabela filtrada com sucesso!")
         st.dataframe(df_final)
 
-        fig, ax = plt.subplots(figsize=(14, 4))
+        fig, ax = plt.subplots(figsize=(15, 4))
         ax.axis('off')
 
         table = ax.table(
@@ -67,6 +67,12 @@ if file:
             loc='center',
             cellLoc='center'
         )
+
+        # Aumentar largura da coluna "Produto" (índice 1)
+        col_widths = {1: 3.5}
+        for (row, col), cell in table.get_celld().items():
+            if col in col_widths:
+                cell.set_width(col_widths[col])
 
         for i in range(len(df_final)):
             for j, col_name in enumerate(df_final.columns):
