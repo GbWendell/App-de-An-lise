@@ -30,7 +30,7 @@ st.markdown("""
 credentials = {
     "usernames": {
         "admin": {
-            "name": "Gabriel Wendell",
+            "name": "Administrador",
             "password": stauth.Hasher(["1234"]).generate()[0]
         },
         "usuario": {
