@@ -114,7 +114,7 @@ if autenticado:
         df['SKU'] = df['SKU'].astype(str).str.replace(" ", "")
 
         skus_criticos = ["P0035", "P0018", "11008874", "P0043", "11009087", "P0044", "P0051", "11008864", "P0045"]
-        skus_todos = ["11009706"]
+        skus_todos = ["11008868", "P0081", "11008996", "P0031", "11008900", "P0013", "P0046", "P0022", "P0039", "P0056", "P0088"]
 
         col1, col2 = st.columns(2)
         with col1:
