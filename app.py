@@ -51,8 +51,6 @@ skus_excluir = [
 
 df = df[~df['SKU'].isin(skus_excluir)]
 
-skus = sorted(df['SKU'].dropna().unique())
-
     skus_selecionados = st.multiselect("🔍 Selecione os SKUs que deseja filtrar", skus)
 
     if skus_selecionados:
