@@ -123,5 +123,3 @@ if file:
         output_img = io.BytesIO()
         fig.savefig(output_img, format='png', dpi=200)
         st.download_button("⬇️ Baixar Imagem da Tabela", output_img.getvalue(), file_name="tabela_destaque.png")
-
-
