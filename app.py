@@ -32,11 +32,11 @@ st.markdown("""
             text-align: center;
             flex-direction: column;
         }
-        /* Rodapé à direita */
+        /* Rodapé à esquerda */
         .footer {
             position: fixed;
             bottom: 10px;
-            right: 10px;
+            left: 10px;
             color: #888888;
             font-size: 14px;
             background-color: #f5f7fa;
@@ -195,7 +195,7 @@ elif autenticado is False:
 elif autenticado is None:
     st.warning("🕵️ Por favor, insira seu login.")
 
-# --- Rodapé fixado no canto inferior direito ---
+# --- Rodapé fixado no canto inferior esquerdo ---
 st.markdown("""
     <div class="footer">
         ⓘ By <strong>Gabriel Wendell Menezes Santos</strong> — Todos os direitos reservados.
