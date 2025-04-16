@@ -41,7 +41,7 @@ if file:
 
     # Lista de SKUs para excluir
     skus_excluir = [
-        "11002224", "11010158"
+        "11002224"
     ]
 
     # Lista de SKUs para "itens críticos"
@@ -60,12 +60,19 @@ if file:
     itens_criticos = df[df['SKU'].isin(skus_criticos)]
     skus_criticos = sorted(itens_criticos['SKU'].dropna().unique())
 
-    # Exibir SKUs para o filtro
-    skus_selecionados = st.multiselect(
-        "🔍 Selecione os SKUs que deseja filtrar (incluindo Itens Críticos)",
-        skus,
-        default=skus_criticos  # Iniciar o filtro com os itens críticos
-    )
+    # Checkbox para selecionar "itens críticos"
+    exibir_criticos = st.checkbox("Exibir apenas Itens Críticos", value=False)
+
+    if exibir_criticos:
+        # Se marcar, mostra apenas os itens críticos
+        skus_selecionados = skus_criticos
+    else:
+        # Caso contrário, mostra todos os SKUs
+        skus_selecionados = st.multiselect(
+            "🔍 Selecione os SKUs que deseja filtrar",
+            skus,
+            default=skus_criticos  # Iniciar com os itens críticos
+        )
 
     if skus_selecionados:
         colunas_desejadas = [
@@ -86,33 +93,3 @@ if file:
 
         table = ax.table(
             cellText=df_final.values,
-            colLabels=df_final.columns,
-            loc='center',
-            cellLoc='center'
-        )
-
-        # Aumentar largura da coluna "Produto" (índice 1)
-        col_widths = {1: 0.3}
-        for (row, col), cell in table.get_celld().items():
-            if col in col_widths:
-                cell.set_width(col_widths[col])
-
-        for i in range(len(df_final)):
-            for j, col_name in enumerate(df_final.columns):
-                valor = df_final.iloc[i][col_name]
-                cor = get_color(valor, col_name)
-                table[(i + 1, j)].set_facecolor(cor)
-
-        table.auto_set_font_size(False)
-        table.set_fontsize(9.0)
-        table.scale(1.2, 1.5)
-
-        st.pyplot(fig)
-
-        output_excel = io.BytesIO()
-        df_final.to_excel(output_excel, index=False)
-        st.download_button("⬇️ Baixar Excel", output_excel.getvalue(), file_name="dispersao_filtrada.xlsx")
-
-        output_img = io.BytesIO()
-        fig.savefig(output_img, format='png', dpi=200)
-        st.download_button("⬇️ Baixar Imagem da Tabela", output_img.getvalue(), file_name="tabela_destaque.png")
