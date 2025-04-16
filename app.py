@@ -4,18 +4,27 @@ import matplotlib.pyplot as plt
 import io
 import streamlit_authenticator as stauth
 
-# --- Autenticação ---
+# --- Autenticação com estrutura nova ---
 
-# Lista de nomes de usuários e senhas (substitua por senhas reais seguras)
-nomes = ["Administrador", "Usuário"]
-usuarios = ["admin", "usuario"]
-senhas = ["1234", "senha"]
+credentials = {
+    "usernames": {
+        "admin": {
+            "name": "Administrador",
+            "password": stauth.Hasher(["1234"]).generate()[0]
+        },
+        "usuario": {
+            "name": "Usuário",
+            "password": stauth.Hasher(["senha"]).generate()[0]
+        }
+    }
+}
 
-# Criptografar senhas
-hashed_senhas = stauth.Hasher(senhas).generate()
-
-# Autenticação
-autenticador = stauth.Authenticate(nomes, usuarios, hashed_senhas, "meu_app", "chave")
+autenticador = stauth.Authenticate(
+    credentials,
+    "meu_app",
+    "chave_super_secreta",
+    cookie_expiry_days=1
+)
 
 nome, autenticado, usuario = autenticador.login("Login", "main")
 
