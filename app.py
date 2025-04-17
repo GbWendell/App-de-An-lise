@@ -109,17 +109,16 @@ if autenticado:
     file = st.file_uploader("📁 Envie a planilha de Dispersão (Excel)", type=["xlsx"])
 
     if file:
-        df = pd.read_excel(file, header=2)
+        df = pd.read_excel(file, sheet_name="Relatório")
+
         df.rename(columns={
             "Nome": "Produto",
             "Cont. Inicial": "Contagem Inicial",
-            "Compra s": "Compras",
-            "Desp. Comp.": "Desp. Completo",
-            "Desp. Incom.": "Desp. Incompleto",
+            "Compras": "Compras",
             "Vendas": "Vendas",
             "Total": "Total",
             "Cont. Atual": "Contagem Atual",
-            "Perda Opera c.": "Perda Operacional",
+            "Perda Operac.": "Perda Operacional",
             "Valor Perda (R$)": "Valor da Perda (R$)"
         }, inplace=True)
 
@@ -136,7 +135,6 @@ if autenticado:
 
         exibir_criticos = st.checkbox("Exibir Itens Críticos")
         exibir_todos = st.checkbox("Exibir Todos os Itens")
-
         pesquisa = st.text_input("🔍 Pesquisar por SKU ou Nome do Produto")
 
         df_filtrado = pd.DataFrame()
@@ -154,9 +152,8 @@ if autenticado:
 
         if not df_filtrado.empty:
             colunas_desejadas = [
-                "SKU", "Produto", "Contagem Inicial", "Compras", "Desp. Completo",
-                "Desp. Incompleto", "Vendas", "Total", "Contagem Atual",
-                "Perda Operacional", "Valor da Perda (R$)"
+                "SKU", "Produto", "Contagem Inicial", "Compras", "Vendas",
+                "Total", "Contagem Atual", "Perda Operacional", "Valor da Perda (R$)"
             ]
             df_final = df_filtrado[colunas_desejadas].copy()
 
