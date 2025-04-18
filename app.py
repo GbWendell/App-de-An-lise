@@ -88,7 +88,7 @@ def get_color(value, col_name, linha_zerada):
         return "#ffffff"
     elif col_name in ["Contagem Inicial", "Compras", "Total"]:
         return "lightgreen"
-    elif col_name in ["Desp. Completo", "Desp. Incompleto"]:
+    elif col_name in ["Desp. Comp.", "Desp. Incom."]:
         return "salmon"
     elif col_name == "Vendas":
         return "khaki"
