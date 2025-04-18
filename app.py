@@ -180,7 +180,7 @@ if autenticado:
 
             col_widths = {
                 "SKU": 0.1,
-                "Produto": 0.4,
+                "Produto": 0.2,
                 "Contagem Inicial": 0.1,
                 "Compras": 0.1,
                 "Desp. Completo": 0.1,
