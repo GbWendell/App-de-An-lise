@@ -115,10 +115,10 @@ if autenticado:
             "Nome": "Produto",
             "Cont. Inicial": "Contagem Inicial",
             "Compras": "Compras",
-             "Desp. Comp.": "Desp. Completo",
-            "Desp. Incom.": "Desp. Incompleto",
             "Vendas": "Vendas",
             "Total": "Total",
+            "Desp. Comp.": "Desp. Completo",
+            "Desp. Incom.": "Desp. Incompleto",
             "Cont. Atual": "Contagem Atual",
             "Perda Operac.": "Perda Operacional",
             "Valor Perda (R$)": "Valor da Perda (R$)"
