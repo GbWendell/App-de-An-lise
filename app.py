@@ -154,9 +154,8 @@ if autenticado:
         # Exibição da tabela
         if not df_filtrado.empty:
             colunas_desejadas = [
-                "SKU", "Produto", "Contagem Inicial", "Compras", "Vendas",
-                "Total", "Desp. Completo", "Desp. Incompleto",
-                "Contagem Atual", "Perda Operacional", "Valor da Perda (R$)"
+                "SKU", "Produto", "Contagem Inicial", "Compras", "Desp. Completo", "Desp. Incompleto", 
+                "Vendas", "Total", "Contagem Atual", "Perda Operacional", "Valor da Perda (R$)"
             ]
 
             df_final = df_filtrado[colunas_desejadas].copy()
