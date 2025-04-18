@@ -168,7 +168,7 @@ if autenticado:
             st.success("✅ Tabela filtrada com sucesso!")
             st.dataframe(df_final)
 
-            fig, ax = plt.subplots(figsize=(15, 4))
+            fig, ax = plt.subplots(figsize=(12, 4))
             ax.axis('off')
 
             table = ax.table(
