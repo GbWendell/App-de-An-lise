@@ -167,7 +167,7 @@ if autenticado:
             st.dataframe(df_final)
 
             # Tabela visual com cores
-            fig, ax = plt.subplots(figsize=(18, 4))
+            fig, ax = plt.subplots(figsize=(20, 4))
             ax.axis('off')
 
             table = ax.table(
