@@ -84,6 +84,7 @@ nome, autenticado, usuario = autenticador.login("Login", "main")
 
 # --- Funções auxiliares ---
 def get_color(value, col_name, linha_zerada):
+    """Define a cor da célula com base no valor da coluna"""
     if linha_zerada:
         return "#ffffff"
     elif col_name in ["Contagem Inicial", "Compras", "Total"]:
@@ -107,10 +108,18 @@ if autenticado:
 
     st.markdown("<h1 style='text-align: center;'>📦 Filtro de Dispersão de Produtos</h1>", unsafe_allow_html=True)
 
+    # --- Filtros ---
     file = st.file_uploader("📁 Envie a planilha de Dispersão (Excel)", type=["xlsx"])
 
+    exibir_criticos = st.checkbox("Exibir Itens Críticos")
+    exibir_todos = st.checkbox("Exibir Itens da Contagem Mensal")
+    pesquisa = st.text_input("🔍 Pesquisar por SKU ou Nome do Produto")
+
+    # --- Carregamento da planilha e filtragem ---
     if file:
         df = pd.read_excel(file, sheet_name="Relatório")
+
+        # Renomeando as colunas para maior clareza
         df.rename(columns={
             "Nome": "Produto",
             "Cont. Inicial": "Contagem Inicial",
@@ -123,41 +132,33 @@ if autenticado:
             "Desp. Comp.": "Desp. Completo",
             "Desp. Incom.": "Desp. Incompleto"
         }, inplace=True)
-        df['SKU'] = df['SKU'].astype(str).str.replace(" ", "")
 
+        # Filtrando os dados com base nos checkboxes e na pesquisa
         skus_criticos = ["P0035", "P0018", "11008874", "P0043", "11009087", "P0044", "P0051", "11008864", "P0045"]
-        skus_todos = ["11008868", "P0081", "11008996", "P0031", "11008900", "P0013", "P0046", "P0022", "P0039", "P0056", "P0088", "P0087",
-                      "P0067", "P0070", "P0068", "P0069", "P0062", "12000104", "12002708", "12000437", "12000105", "12003040", "P0059", "P0060",
-                      "P0061", "P0063", "P0064", "12002606", "12002608", "P0079", "P0007", "P0025", "11008881", "P0003", "P0040", "P0042", "85", "109",
-                      "P0001", "11008998", "11008997", "P0010", "11009221", "11008888", "22005345", "P0015", "P0014", "P0002", "22005135",
-                      "22005346", "P0047", "P0048", "P0019", "P0008", "P0005", "P0028", "22004844", "P0020", "P0053", "P0037", "P0075",
-                      "P0036", "P0004", "P0026", "22004900", "22005122", "22004939", "P0013", "P0021", "11009721", "11009722", "P0012", "P0024",
-                      "P0033", "P0011", "P0032", "P0030", "P0055", "11009773", "11009960", "P0038", "11010051", "22005426", "22005427"]
-
-        with st.expander("🔍 Filtros de visualização"):
-            exibir_criticos = st.checkbox("Exibir Itens Críticos")
-            exibir_contagem_mensal = st.checkbox("Exibir Itens da Contagem Mensal")
-            exibir_todos_itens = st.checkbox("Exibir Todos os Itens da Planilha")
-            pesquisa = st.text_input("Pesquisar por SKU ou Nome do Produto")
+        skus_todos = ["11008868", "P0081", "11008996", "P0031", "11008900", "P0013", "P0046", "P0022", "P0039", "P0056", "P0088", "P0087"]
 
         df_filtrado = pd.DataFrame()
 
         if exibir_criticos:
-            df_filtrado = pd.concat([df_filtrado, df[df['SKU'].isin(skus_criticos)]])
-        if exibir_contagem_mensal:
+            df_filtrado = df[df['SKU'].isin(skus_criticos)]
+
+        if exibir_todos:
             df_filtrado = pd.concat([df_filtrado, df[df['SKU'].isin(skus_todos)]])
-        if exibir_todos_itens:
-            df_filtrado = pd.concat([df_filtrado, df])
+
         if pesquisa:
             pesquisa = pesquisa.lower()
-            resultado_pesquisa = df[
-                df['SKU'].str.lower().str.contains(pesquisa) |
-                df['Produto'].str.lower().str.contains(pesquisa)
-            ]
+            resultado_pesquisa = df[df['SKU'].str.lower().str.contains(pesquisa) | df['Produto'].str.lower().str.contains(pesquisa)]
             df_filtrado = pd.concat([df_filtrado, resultado_pesquisa])
 
-        df_filtrado.drop_duplicates(subset=["SKU"], inplace=True)
+        # --- Exibindo a imagem de motivação caso não tenha filtro aplicado
+        if df_filtrado.empty:
+            st.info("Nenhum filtro foi aplicado. Escolha uma opção acima ou faça uma pesquisa.")
+            st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
+            st.image("https://cdn.pixabay.com/photo/2015/12/08/00/32/business-1081802_960_720.jpg", width=600)
+            st.markdown("<h3>Ser dono do seu próprio negócio é ter o controle da sua jornada. Não é sobre ter um emprego, é sobre construir um legado.</h3>", unsafe_allow_html=True)
+            st.markdown("</div>", unsafe_allow_html=True)
 
+        # --- Exibindo a tabela filtrada e opções de download
         if not df_filtrado.empty:
             colunas_desejadas = [
                 "SKU", "Produto", "Contagem Inicial", "Compras",
@@ -167,27 +168,31 @@ if autenticado:
 
             df_final = df_filtrado[colunas_desejadas].copy()
 
+            # Convertendo valores para numéricos
             for col in df_final.columns[2:]:
                 df_final[col] = pd.to_numeric(df_final[col].astype(str).str.replace(",", "."), errors='coerce')
 
             st.success("✅ Tabela filtrada com sucesso!")
             st.dataframe(df_final)
 
+            # --- Exibindo a tabela em formato de gráfico
             fig, ax = plt.subplots(figsize=(12, 4))
             ax.axis('off')
+            table = ax.table(cellText=df_final.values, colLabels=df_final.columns, loc='center', cellLoc='center')
 
-            table = ax.table(
-                cellText=df_final.values,
-                colLabels=df_final.columns,
-                loc='center',
-                cellLoc='center'
-            )
-
+            # Ajustando a largura das colunas
             col_widths = {
-                "SKU": 0.1, "Produto": 0.2, "Contagem Inicial": 0.1,
-                "Compras": 0.1, "Desp. Completo": 0.1, "Desp. Incompleto": 0.1,
-                "Vendas": 0.1, "Total": 0.1, "Contagem Atual": 0.1,
-                "Perda Operacional": 0.1, "Valor da Perda (R$)": 0.15
+                "SKU": 0.1,
+                "Produto": 0.2,
+                "Contagem Inicial": 0.1,
+                "Compras": 0.1,
+                "Desp. Completo": 0.1,
+                "Desp. Incompleto": 0.1,
+                "Vendas": 0.1,
+                "Total": 0.1,
+                "Contagem Atual": 0.1,
+                "Perda Operacional": 0.1,
+                "Valor da Perda (R$)": 0.15
             }
 
             for (row, col), cell in table.get_celld().items():
@@ -196,6 +201,7 @@ if autenticado:
                     if label in col_widths:
                         cell.set_width(col_widths[label])
 
+            # Ajustando as cores das células
             for i in range(len(df_final)):
                 valores = df_final.iloc[i, 2:]
                 linha_zerada = all(v == 0.0 or pd.isna(v) for v in valores)
@@ -210,6 +216,7 @@ if autenticado:
 
             st.pyplot(fig)
 
+            # --- Opções de download
             output_excel = io.BytesIO()
             df_final.to_excel(output_excel, index=False)
             st.download_button("⬇️ Baixar Excel", output_excel.getvalue(), file_name="dispersao_filtrada.xlsx")
