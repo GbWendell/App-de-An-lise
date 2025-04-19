@@ -62,150 +62,164 @@ st.markdown("""
 # --- Autenticação ---
 credentials = {
     "usernames": {
-        "admin": {"name": "Gabriel Wendell", "password": stauth.Hasher(["1234"]).generate()[0]},
-        "usuario": {"name": "Usuário", "password": stauth.Hasher(["senha"]).generate()[0]}
+        "admin": {
+            "name": "Gabriel Wendell",
+            "password": stauth.Hasher(["1234"]).generate()[0]
+        },
+        "usuario": {
+            "name": "Usuário",
+            "password": stauth.Hasher(["senha"]).generate()[0]
+        }
     }
 }
-autenticador = stauth.Authenticate(credentials, "meu_app", "chave_super_secreta", cookie_expiry_days=1)
+
+autenticador = stauth.Authenticate(
+    credentials,
+    "meu_app",
+    "chave_super_secreta",
+    cookie_expiry_days=1
+)
+
 nome, autenticado, usuario = autenticador.login("Login", "main")
 
-# --- Função para colorir a tabela ---
+# --- Funções auxiliares ---
 def get_color(value, col_name, linha_zerada):
     if linha_zerada:
         return "#ffffff"
-    if col_name in ["Contagem Inicial", "Compras", "Total"]:
+    elif col_name in ["Contagem Inicial", "Compras", "Total"]:
         return "lightgreen"
-    if col_name in ["Desp. Completo", "Desp. Incompleto"]:
+    elif col_name in ["Desp. Completo", "Desp. Incompleto"]:
         return "salmon"
-    if col_name == "Vendas":
+    elif col_name == "Vendas":
         return "khaki"
-    if col_name == "Contagem Atual":
+    elif col_name == "Contagem Atual":
         return "lightblue"
-    if col_name == "Perda Operacional":
+    elif col_name == "Perda Operacional":
         return "salmon" if value > 0 else "lightgreen"
-    if col_name == "Valor da Perda (R$)":
+    elif col_name == "Valor da Perda (R$)":
         return "salmon" if value > 0 else "lightgreen"
     return "white"
 
 # --- Conteúdo principal ---
 if autenticado:
-    # Logout e boas-vindas
     autenticador.logout("Logout", "sidebar")
     st.sidebar.success(f"Bem-vindo, {nome}!")
 
-    # Menu de navegação
-    st.sidebar.markdown("## Menu")
-    opcao = st.sidebar.radio("", ["Filtro de Dispersão", "Maiores Perdas Operacionais"] )
+    st.markdown("<h1 style='text-align: center;'>📦 Filtro de Dispersão de Produtos</h1>", unsafe_allow_html=True)
 
-    # Upload da planilha
-    file = st.sidebar.file_uploader("📁 Envie a planilha (Excel)", type=["xlsx"])
+    file = st.file_uploader("📁 Envie a planilha de Dispersão (Excel)", type=["xlsx"])
 
-    # Carregar e preparar dataframe se houver arquivo
-    df = None
     if file:
         df = pd.read_excel(file, sheet_name="Relatório")
         df.rename(columns={
-            "Nome": "Produto", "Cont. Inicial": "Contagem Inicial", "Compras": "Compras",
-            "Vendas": "Vendas", "Total": "Total", "Cont. Atual": "Contagem Atual",
-            "Perda Operac.": "Perda Operacional", "Valor Perda (R$)": "Valor da Perda (R$)",
-            "Desp. Comp.": "Desp. Completo", "Desp. Incom.": "Desp. Incompleto"
+            "Nome": "Produto",
+            "Cont. Inicial": "Contagem Inicial",
+            "Compras": "Compras",
+            "Vendas": "Vendas",
+            "Total": "Total",
+            "Cont. Atual": "Contagem Atual",
+            "Perda Operac.": "Perda Operacional",
+            "Valor Perda (R$)": "Valor da Perda (R$)",
+            "Desp. Comp.": "Desp. Completo",
+            "Desp. Incom.": "Desp. Incompleto"
         }, inplace=True)
         df['SKU'] = df['SKU'].astype(str).str.replace(" ", "")
 
-    # Título principal
-    st.markdown("<h1 style='text-align: center;'>📦 Aplicativo de Dispersão de Produtos</h1>", unsafe_allow_html=True)
+        skus_criticos = ["P0035", "P0018", "11008874", "P0043", "11009087", "P0044", "P0051", "11008864", "P0045"]
+        skus_todos = ["11008868", "P0081", "11008996", "P0031", "11008900", "P0013", "P0046", "P0022", "P0039", "P0056", "P0088", "P0087",
+                      "P0067", "P0070", "P0068", "P0069", "P0062", "12000104", "12002708", "12000437", "12000105", "12003040", "P0059", "P0060",
+                      "P0061", "P0063", "P0064", "12002606", "12002608", "P0079", "P0007", "P0025", "11008881", "P0003", "P0040", "P0042", "85", "109",
+                      "P0001", "11008998", "11008997", "P0010", "11009221", "11008888", "22005345", "P0015", "P0014", "P0002", "22005135",
+                      "22005346", "P0047", "P0048", "P0019", "P0008", "P0005", "P0028", "22004844", "P0020", "P0053", "P0037", "P0075",
+                      "P0036", "P0004", "P0026", "22004900", "22005122", "22004939", "P0013", "P0021", "11009721", "11009722", "P0012", "P0024",
+                      "P0033", "P0011", "P0032", "P0030", "P0055", "11009773", "11009960", "P0038", "11010051", "22005426", "22005427"]
 
-    # --- Filtro de Dispersão ---
-    if opcao == "Filtro de Dispersão":
-        if not df:
-            st.info("Envie a planilha para começar a análise.")
-        else:
-            # Seleção de filtros
-            with st.expander("🔍 Filtros de visualização"):
-                exibir_criticos = st.checkbox("Exibir Itens Críticos")
-                exibir_contagem = st.checkbox("Exibir Itens da Contagem Mensal")
-                exibir_todos = st.checkbox("Exibir Todos os Itens da Planilha")
-                pesquisa = st.text_input("🔎 Pesquisar SKU ou Nome")
+        with st.expander("🔍 Filtros de visualização"):
+            exibir_criticos = st.checkbox("Exibir Itens Críticos")
+            exibir_contagem_mensal = st.checkbox("Exibir Itens da Contagem Mensal")
+            exibir_todos_itens = st.checkbox("Exibir Todos os Itens da Planilha")
+            pesquisa = st.text_input("Pesquisar por SKU ou Nome do Produto")
 
-            # Listas de SKU
-            skus_criticos = ["P0035","P0018","11008874","P0043","11009087","P0044","P0051","11008864","P0045"]
-            skus_contagem = ["11008868","P0081","11008996","P0031","11008900","P0013","P0046","P0022","P0039"]
+        df_filtrado = pd.DataFrame()
 
-            # Filtragem dos dados
-            df_filtrado = pd.DataFrame()
-            if exibir_criticos: df_filtrado = pd.concat([df_filtrado, df[df['SKU'].isin(skus_criticos)]])
-            if exibir_contagem: df_filtrado = pd.concat([df_filtrado, df[df['SKU'].isin(skus_contagem)]])
-            if exibir_todos: df_filtrado = pd.concat([df_filtrado, df])
-            if pesquisa:
-                pesquisa_lower = pesquisa.lower()
-                df_filtrado = pd.concat([
-                    df_filtrado,
-                    df[df['SKU'].str.lower().str.contains(pesquisa_lower) |
-                       df['Produto'].str.lower().str.contains(pesquisa_lower)]
-                ])
-            df_filtrado.drop_duplicates(subset=["SKU"], inplace=True)
+        if exibir_criticos:
+            df_filtrado = pd.concat([df_filtrado, df[df['SKU'].isin(skus_criticos)]])
+        if exibir_contagem_mensal:
+            df_filtrado = pd.concat([df_filtrado, df[df['SKU'].isin(skus_todos)]])
+        if exibir_todos_itens:
+            df_filtrado = pd.concat([df_filtrado, df])
+        if pesquisa:
+            pesquisa = pesquisa.lower()
+            resultado_pesquisa = df[
+                df['SKU'].str.lower().str.contains(pesquisa) |
+                df['Produto'].str.lower().str.contains(pesquisa)
+            ]
+            df_filtrado = pd.concat([df_filtrado, resultado_pesquisa])
 
-            # Se não filtrou nada, mostrar imagem motivacional
-            if df_filtrado.empty:
-                st.info("Nenhum filtro aplicado.")
-                st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
-                st.image("https://cdn.pixabay.com/photo/2015/12/08/00/32/business-1081802_960_720.jpg", width=600)
-                st.markdown(
-                    "<h3>Ser dono do seu próprio negócio é ter o controle da sua jornada. Não é sobre ter um emprego, é sobre construir um legado.</h3>",
-                    unsafe_allow_html=True
-                )
-                st.markdown("</div>", unsafe_allow_html=True)
-            else:
-                # Exibir tabela e download
-                colunas = ["SKU","Produto","Contagem Inicial","Compras","Desp. Completo",
-                           "Desp. Incompleto","Vendas","Total","Contagem Atual",
-                           "Perda Operacional","Valor da Perda (R$)"]
-                df_final = df_filtrado[colunas].copy()
-                for c in df_final.columns[2:]:
-                    df_final[c] = pd.to_numeric(df_final[c].astype(str).str.replace(",","."), errors='coerce')
-                st.dataframe(df_final)
-                # Geração da tabela colorida
-                fig, ax = plt.subplots(figsize=(12,4))
-                ax.axis('off')
-                tab = ax.table(cellText=df_final.values, colLabels=df_final.columns, loc='center', cellLoc='center')
-                for (r, c), cell in tab.get_celld().items():
-                    if c < len(df_final.columns):
-                        label = df_final.columns[c]
-                        cor = get_color(df_final.iloc[r-1][label], label, all(val==0 or pd.isna(val) for val in df_final.iloc[r-1,2:]))
-                        cell.set_facecolor(cor)
-                tab.auto_set_font_size(False)
-                tab.set_fontsize(9)
-                tab.scale(1.2,1.5)
-                st.pyplot(fig)
+        df_filtrado.drop_duplicates(subset=["SKU"], inplace=True)
 
-                # Download
-                buf = io.BytesIO()
-                df_final.to_excel(buf, index=False)
-                st.download_button("⬇️ Baixar Excel", buf.getvalue(), file_name="dispersao_filtrada.xlsx")
-                img_buf = io.BytesIO()
-                fig.savefig(img_buf, format='png', dpi=200)
-                st.download_button("⬇️ Baixar Imagem", img_buf.getvalue(), file_name="tabela_destaque.png")
+        if not df_filtrado.empty:
+            colunas_desejadas = [
+                "SKU", "Produto", "Contagem Inicial", "Compras",
+                "Desp. Completo", "Desp. Incompleto", "Vendas",
+                "Total", "Contagem Atual", "Perda Operacional", "Valor da Perda (R$)"
+            ]
 
-    # --- Maiores Perdas Operacionais ---
-    elif opcao == "Maiores Perdas Operacionais":
-        if not df:
-            st.info("Envie a planilha para visualizar as maiores perdas.")
-        else:
-            # Selecionar top 9 perdas
-            df_plot = df.copy()
-            df_plot['Perda Operacional'] = pd.to_numeric(df_plot['Perda Operacional'].astype(str).str.replace(",","."), errors='coerce')
-            top9 = df_plot.nlargest(9, 'Perda Operacional')
+            df_final = df_filtrado[colunas_desejadas].copy()
 
-            # Gráfico de barras horizontais
-            fig, ax = plt.subplots(figsize=(8,6))
-            ax.barh(top9['Produto'], top9['Perda Operacional'])
-            ax.invert_yaxis()
-            ax.set_xlabel('Perda Operacional')
-            ax.set_title('Top 9 Maiores Perdas Operacionais')
+            for col in df_final.columns[2:]:
+                df_final[col] = pd.to_numeric(df_final[col].astype(str).str.replace(",", "."), errors='coerce')
+
+            st.success("✅ Tabela filtrada com sucesso!")
+            st.dataframe(df_final)
+
+            fig, ax = plt.subplots(figsize=(12, 4))
+            ax.axis('off')
+
+            table = ax.table(
+                cellText=df_final.values,
+                colLabels=df_final.columns,
+                loc='center',
+                cellLoc='center'
+            )
+
+            col_widths = {
+                "SKU": 0.1, "Produto": 0.2, "Contagem Inicial": 0.1,
+                "Compras": 0.1, "Desp. Completo": 0.1, "Desp. Incompleto": 0.1,
+                "Vendas": 0.1, "Total": 0.1, "Contagem Atual": 0.1,
+                "Perda Operacional": 0.1, "Valor da Perda (R$)": 0.15
+            }
+
+            for (row, col), cell in table.get_celld().items():
+                if col < len(df_final.columns):
+                    label = df_final.columns[col]
+                    if label in col_widths:
+                        cell.set_width(col_widths[label])
+
+            for i in range(len(df_final)):
+                valores = df_final.iloc[i, 2:]
+                linha_zerada = all(v == 0.0 or pd.isna(v) for v in valores)
+                for j, col_name in enumerate(df_final.columns):
+                    valor = df_final.iloc[i][col_name]
+                    cor = get_color(valor, col_name, linha_zerada)
+                    table[(i + 1, j)].set_facecolor(cor)
+
+            table.auto_set_font_size(False)
+            table.set_fontsize(9.0)
+            table.scale(1.2, 1.5)
+
             st.pyplot(fig)
 
-    # Rodapé
+            output_excel = io.BytesIO()
+            df_final.to_excel(output_excel, index=False)
+            st.download_button("⬇️ Baixar Excel", output_excel.getvalue(), file_name="dispersao_filtrada.xlsx")
+
+            output_img = io.BytesIO()
+            fig.savefig(output_img, format='png', dpi=200)
+            st.download_button("⬇️ Baixar Imagem da Tabela", output_img.getvalue(), file_name="tabela_destaque.png")
+
     st.markdown("<div class='footer'><span>By Gabriel Wendell Menezes Santos</span></div>", unsafe_allow_html=True)
+
 elif autenticado is False:
     st.error("Usuário ou senha inválidos.")
 elif autenticado is None:
