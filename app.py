@@ -32,17 +32,6 @@ st.markdown("""
         .stButton>button:hover {
             background-color: #34495e;
         }
-        .stDownloadButton>button {
-            border-radius: 8px;
-            background-color: #16a085;
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            margin-right: 10px;
-        }
-        .stDownloadButton>button:hover {
-            background-color: #138d75;
-        }
         .footer {
             position: fixed;
             bottom: 0;
@@ -62,147 +51,77 @@ st.markdown("""
 # --- Autenticação ---
 credentials = {
     "usernames": {
-        "admin": {
-            "name": "Gabriel Wendell",
-            "password": stauth.Hasher(["1234"]).generate()[0]
-        },
-        "usuario": {
-            "name": "Usuário",
-            "password": stauth.Hasher(["senha"]).generate()[0]
-        }
+        "admin": {"name": "Gabriel Wendell", "password": stauth.Hasher(["1234"]).generate()[0]},
+        "usuario": {"name": "Usuário",        "password": stauth.Hasher(["senha"]).generate()[0]}
     }
 }
-
-autenticador = stauth.Authenticate(
-    credentials,
-    "meu_app",
-    "chave_super_secreta",
-    cookie_expiry_days=1
-)
-
-nome, autenticado, usuario = autenticador.login("Login", "main")
+authenticator = stauth.Authenticate(credentials, "meu_app", "chave_super_secreta", cookie_expiry_days=1)
+name, authenticated, username = authenticator.login("Login", "main")
 
 # --- Funções auxiliares ---
-def get_color(value, col_name, linha_zerada):
-    if linha_zerada:
-        return "#ffffff"
-    elif col_name in ["Contagem Inicial", "Compras", "Total"]:
-        return "lightgreen"
-    elif col_name in ["Desp. Completo", "Desp. Incompleto"]:
-        return "salmon"
-    elif col_name == "Vendas":
-        return "khaki"
-    elif col_name == "Contagem Atual":
-        return "lightblue"
-    elif col_name == "Perda Operacional":
-        return "salmon" if value > 0 else "lightgreen"
-    elif col_name == "Valor da Perda (R$)":
-        return "salmon" if value > 0 else "lightgreen"
-    return "white"
+def carregar_planilha(file):
+    df = pd.read_excel(file, sheet_name="Relatório")
+    df.rename(columns={
+        "Nome": "Produto",
+        "Cont. Inicial": "Contagem Inicial",
+        "Compras": "Compras",
+        "Vendas": "Vendas",
+        "Total": "Total",
+        "Cont. Atual": "Contagem Atual",
+        "Perda Operac.": "Perda Operacional",
+        "Valor Perda (R$)": "Valor da Perda (R$)",
+        "Desp. Comp.": "Desp. Completo",
+        "Desp. Incom.": "Desp. Incompleto"
+    }, inplace=True)
+    df['SKU'] = df['SKU'].astype(str).str.replace(" ", "")
+    df['Perda Operacional'] = pd.to_numeric(df['Perda Operacional'].astype(str).str.replace(",", "."), errors='coerce')
+    df['Valor da Perda (R$)'] = pd.to_numeric(df['Valor da Perda (R$)'].astype(str).str.replace(",", "."), errors='coerce')
+    return df
 
-def plot_loss_operational(df):
-    # Calculando as 20 maiores perdas operacionais
-    df_sorted = df.sort_values(by="Perda Operacional", ascending=False).head(20)
-    
-    fig, ax = plt.subplots(figsize=(10, 6))
-    ax.barh(df_sorted["Produto"], df_sorted["Perda Operacional"], color="salmon")
-    ax.set_xlabel("Perda Operacional (R$)")
-    ax.set_title("Top 20 Itens com Maiores Perdas Operacionais")
-    st.pyplot(fig)
+# --- Aplicação principal ---
+if authenticated:
+    authenticator.logout("Logout", "sidebar")
+    st.sidebar.success(f"Bem-vindo, {name}!")
 
-def plot_stock_difference(df):
-    # Calculando as 20 maiores diferenças de estoque
-    df['Diferenca Estoque'] = df['Total'] - df['Contagem Atual']
-    df_sorted = df.sort_values(by="Diferenca Estoque", ascending=False).head(20)
-    
-    fig, ax = plt.subplots(figsize=(10, 6))
-    ax.barh(df_sorted["Produto"], df_sorted["Diferenca Estoque"], color="lightblue")
-    ax.set_xlabel("Diferença de Estoque")
-    ax.set_title("Top 20 Maiores Diferenças de Estoque")
-    st.pyplot(fig)
+    # Menu lateral
+    st.sidebar.markdown("## Navegação")
+    page = st.sidebar.radio("", ["20 Maiores Perdas Operacionais", "20 Maiores Perdas em Valor"])
 
-# --- Conteúdo principal ---
-if autenticado:
-    autenticador.logout("Logout", "sidebar")
-    st.sidebar.success(f"Bem-vindo, {nome}!")
+    file = st.sidebar.file_uploader("📁 Envie a planilha de Dispersão (Excel)", type=["xlsx"])
 
-    st.markdown("<h1 style='text-align: center;'>📦 Filtro de Dispersão de Produtos</h1>", unsafe_allow_html=True)
+    if not file:
+        st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
+        st.image("https://cdn.pixabay.com/photo/2015/12/08/00/32/business-1081802_960_720.jpg", width=600)
+        st.markdown(
+            "<h3>Ser dono do seu próprio negócio é ter o controle da sua jornada. Não é sobre ter um emprego, é sobre construir um legado.</h3>",
+            unsafe_allow_html=True
+        )
+        st.markdown("</div>", unsafe_allow_html=True)
+    else:
+        df = carregar_planilha(file)
 
-    # --- Menu lateral ---
-    menu = st.sidebar.selectbox("Escolha uma opção", 
-                               ["Filtros de Visualização", "Maiores Perdas Operacionais", "Maiores Diferenças de Estoque"])
+        st.markdown("<h1 style='text-align: center;'>📊 Análise de Perdas</h1>", unsafe_allow_html=True)
 
-    # --- Carregar a planilha e processar os dados ---
-    file = st.file_uploader("📁 Envie a planilha de Dispersão (Excel)", type=["xlsx"])
+        if page == "20 Maiores Perdas Operacionais":
+            top20 = df.nlargest(20, 'Perda Operacional')
+            fig, ax = plt.subplots(figsize=(8, 6))
+            ax.barh(top20['Produto'], top20['Perda Operacional'])
+            ax.invert_yaxis()
+            ax.set_xlabel('Perda Operacional')
+            ax.set_title('Top 20 Maiores Perdas Operacionais')
+            st.pyplot(fig)
 
-    if file:
-        df = pd.read_excel(file, sheet_name="Relatório")
-        df.rename(columns={
-            "Nome": "Produto",
-            "Cont. Inicial": "Contagem Inicial",
-            "Compras": "Compras",
-            "Vendas": "Vendas",
-            "Total": "Total",
-            "Cont. Atual": "Contagem Atual",
-            "Perda Operac.": "Perda Operacional",
-            "Valor Perda (R$)": "Valor da Perda (R$)",
-            "Desp. Comp.": "Desp. Completo",
-            "Desp. Incom.": "Desp. Incompleto"
-        }, inplace=True)
-        df['SKU'] = df['SKU'].astype(str).str.replace(" ", "")
-
-        # --- Filtros de Visualização ---
-        if menu == "Filtros de Visualização":
-            with st.expander("🔍 Filtros de visualização"):
-                exibir_criticos = st.checkbox("Exibir Itens Críticos")
-                exibir_contagem_mensal = st.checkbox("Exibir Itens da Contagem Mensal")
-                exibir_todos_itens = st.checkbox("Exibir Todos os Itens da Planilha")
-                pesquisa = st.text_input("Pesquisar por SKU ou Nome do Produto")
-
-            df_filtrado = pd.DataFrame()
-
-            # Filtros
-            if exibir_criticos:
-                skus_criticos = ["P0035", "P0018", "11008874", "P0043", "11009087", "P0044", "P0051", "11008864", "P0045"]
-                df_filtrado = pd.concat([df_filtrado, df[df['SKU'].isin(skus_criticos)]])
-            if exibir_contagem_mensal:
-                skus_todos = ["11008868", "P0081", "11008996", "P0031", "11008900", "P0013", "P0046", "P0022", "P0039", "P0056", "P0088", "P0087", "P0067"]
-                df_filtrado = pd.concat([df_filtrado, df[df['SKU'].isin(skus_todos)]])
-            if exibir_todos_itens:
-                df_filtrado = pd.concat([df_filtrado, df])
-            if pesquisa:
-                pesquisa = pesquisa.lower()
-                resultado_pesquisa = df[
-                    df['SKU'].str.lower().str.contains(pesquisa) |
-                    df['Produto'].str.lower().str.contains(pesquisa)
-                ]
-                df_filtrado = pd.concat([df_filtrado, resultado_pesquisa])
-
-            df_filtrado.drop_duplicates(subset=["SKU"], inplace=True)
-
-            if not df_filtrado.empty:
-                colunas_desejadas = [
-                    "SKU", "Produto", "Contagem Inicial", "Compras", "Desp. Completo", "Desp. Incompleto", 
-                    "Vendas", "Total", "Contagem Atual", "Perda Operacional", "Valor da Perda (R$)"
-                ]
-
-                df_final = df_filtrado[colunas_desejadas].copy()
-
-                for col in df_final.columns[2:]:
-                    df_final[col] = pd.to_numeric(df_final[col].astype(str).str.replace(",", "."), errors='coerce')
-
-                st.success("✅ Tabela filtrada com sucesso!")
-                st.dataframe(df_final)
-
-        elif menu == "Maiores Perdas Operacionais":
-            plot_loss_operational(df)
-
-        elif menu == "Maiores Diferenças de Estoque":
-            plot_stock_difference(df)
+        elif page == "20 Maiores Perdas em Valor":
+            top20v = df.nlargest(20, 'Valor da Perda (R$)')
+            fig, ax = plt.subplots(figsize=(8, 6))
+            ax.barh(top20v['Produto'], top20v['Valor da Perda (R$)'])
+            ax.invert_yaxis()
+            ax.set_xlabel('Valor da Perda (R$)')
+            ax.set_title('Top 20 Maiores Perdas em Valor')
+            st.pyplot(fig)
 
     st.markdown("<div class='footer'><span>By Gabriel Wendell Menezes Santos</span></div>", unsafe_allow_html=True)
-
-elif autenticado is False:
+elif authenticated is False:
     st.error("Usuário ou senha inválidos.")
-elif autenticado is None:
+elif authenticated is None:
     st.warning("Por favor, insira seu login.")
