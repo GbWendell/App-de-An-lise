@@ -4,18 +4,39 @@ import matplotlib.pyplot as plt
 import io
 import streamlit_authenticator as stauth
 
-# --- Estilo da página ---
+# --- Estilo personalizado ---
 st.markdown("""
     <style>
-        body { background-color: #f5f7fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .main .block-container { padding: 2rem 3rem; background-color: white; border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
-        h1, h2 { color: #2c3e50; }
-        .stButton>button { border-radius: 12px; background-color: #2c3e50; color: white; border: none; padding: 0.6rem 1.2rem; transition: background-color 0.3s; }
-        .stButton>button:hover { background-color: #34495e; }
-        .stDownloadButton>button { border-radius: 8px; background-color: #16a085; color: white; border: none; padding: 0.5rem 1rem; margin-right: 10px; }
-        .stDownloadButton>button:hover { background-color: #138d75; }
-        .footer { position: fixed; bottom: 0; left: 0; width: 100%; text-align: center; padding: 10px 0; }
-        .footer span { font-size: 14px; color: grey; }
+        /* Sidebar menu styling */
+        .sidebar .stRadio > div {
+            background: #fff;
+            border-radius: 10px;
+            padding: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .sidebar .stRadio label {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .sidebar .stRadio input:checked + label {
+            background: #f0f4f8;
+            font-weight: bold;
+        }
+        .sidebar .stRadio label:hover {
+            background: #f5f7fa;
+        }
+        .footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            padding: 10px 0;
+        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -29,7 +50,7 @@ credentials = {
 authenticator = stauth.Authenticate(credentials, "meu_app", "chave_super_secreta", cookie_expiry_days=1)
 name, authenticated, username = authenticator.login("Login", "main")
 
-# --- Auxiliares ---
+# --- Funções auxiliares ---
 def get_color(value, col_name, linha_zerada):
     if linha_zerada: return "#ffffff"
     mapping = {
@@ -56,26 +77,32 @@ def carregar_planilha(file):
 
 # --- App principal ---
 if authenticated:
-    authenticator.logout("Logout", "sidebar")
+    # Logout colocado ao final do menu
     st.sidebar.success(f"Bem-vindo, {name}!")
 
-    # Menu lateral atualizado (nome revertido)
-    page = st.sidebar.radio("Navegação", [
-        "Filtro de Dispersão",
-        "20 Maiores Perdas Operacionais",
-        "20 Maiores Perdas em Valor"
-    ])
+    # Menu lateral com estilo customizado e ícones
+    options = {
+        "Filtro de Dispersão": "📋 Filtro de Dispersão",
+        "20 Maiores Perdas Operacionais": "📊 Maiores Perdas Operacionais",
+        "20 Maiores Perdas em Valor": "💰 Maiores Perdas em Valor"
+    }
+    page = st.sidebar.radio("", list(options.values()))
+
+    # Espaço antes do logout
+    st.sidebar.markdown("---")
+    authenticator.logout("🔒 Logout", "sidebar")
 
     st.markdown("<h1 style='text-align: center;'>📦 Meu App de Dispersão</h1>", unsafe_allow_html=True)
 
-    # Envio de planilha no meio da página
+    # Envio de planilha no centro da página
     file = st.file_uploader("📁 Envie a planilha de Dispersão (Excel)", type=["xlsx"])
 
     if file:
         df = carregar_planilha(file)
 
-        if page == "Filtro de Dispersão":
-            st.markdown("<h2 style='text-align: center;'>📄 Filtro de Dispersão de Produtos</h2>", unsafe_allow_html=True)
+        # Página de filtros
+        if page == options["Filtro de Dispersão"]:
+            st.markdown("<h2 style='text-align: center;'>📋 Filtro de Dispersão de Produtos</h2>", unsafe_allow_html=True)
             with st.expander("🔍 Filtros de visualização"):
                 ex_crit = st.checkbox("Exibir Itens Críticos")
                 ex_mensal = st.checkbox("Exibir Itens da Contagem Mensal")
@@ -119,32 +146,31 @@ if authenticated:
                 img_buf = io.BytesIO(); fig.savefig(img_buf, format='png', dpi=200)
                 st.download_button("⬇️ Baixar Imagem", img_buf.getvalue(), file_name="tabela_destaque.png")
 
-        elif page == "20 Maiores Perdas Operacionais":
+        # Top 20 perdas operacionais
+        elif page == options["20 Maiores Perdas Operacionais"]:
             st.markdown("<h2 style='text-align: center;'>📊 Top 20 Maiores Perdas Operacionais</h2>", unsafe_allow_html=True)
             top20 = df.nlargest(20, 'Perda Operacional')
             fig, ax = plt.subplots(figsize=(10,6))
-            bars = ax.barh(top20['Produto'], top20['Perda Operacional'], color='salmon')
-            ax.invert_yaxis()
-            ax.set_xlabel('Perda Operacional (unidades)', fontsize=12)
+            bars = ax.barh(top20['Produto'], top20['Perda Operacional'], color='salmon', edgecolor='darkred')
+            ax.invert_yaxis(); ax.set_xlabel('Perda Operacional (unidades)', fontsize=12)
             ax.set_title('Top 20 Maiores Perdas Operacionais', fontsize=14)
             ax.grid(axis='x', linestyle='--', alpha=0.7)
             ax.bar_label(bars, labels=[f"{v:,.0f}" for v in top20['Perda Operacional']], padding=4, fontsize=10)
-            plt.tight_layout()
-            st.pyplot(fig)
+            plt.tight_layout(); st.pyplot(fig)
 
-        elif page == "20 Maiores Perdas em Valor":
+        # Top 20 perdas em valor
+        elif page == options["20 Maiores Perdas em Valor"]:
             st.markdown("<h2 style='text-align: center;'>📊 Top 20 Maiores Perdas em Valor</h2>", unsafe_allow_html=True)
             top20v = df.nlargest(20, 'Valor da Perda (R$)')
             fig, ax = plt.subplots(figsize=(10,6))
-            bars = ax.barh(top20v['Produto'], top20v['Valor da Perda (R$)'], color='salmon')
-            ax.invert_yaxis()
-            ax.set_xlabel('Valor da Perda (R$)', fontsize=12)
+            bars = ax.barh(top20v['Produto'], top20v['Valor da Perda (R$)'], color='salmon', edgecolor='darkred')
+            ax.invert_yaxis(); ax.set_xlabel('Valor da Perda (R$)', fontsize=12)
             ax.set_title('Top 20 Maiores Perdas em Valor', fontsize=14)
             ax.grid(axis='x', linestyle='--', alpha=0.7)
             ax.bar_label(bars, labels=[f"R$ {v:,.2f}" for v in top20v['Valor da Perda (R$)']], padding=4, fontsize=10)
-            plt.tight_layout()
-            st.pyplot(fig)
+            plt.tight_layout(); st.pyplot(fig)
 
+    # Rodapé
     st.markdown("<div class='footer'><span>By Gabriel Wendell Menezes Santos</span></div>", unsafe_allow_html=True)
 elif authenticated is False:
     st.error("Usuário ou senha inválidos.")
