@@ -154,7 +154,10 @@ if autenticado:
         if df_filtrado.empty:
             st.info("Nenhum filtro foi aplicado. Escolha uma opção acima ou faça uma pesquisa.")
             st.markdown("<div style='text-align: center;'>", unsafe_allow_html=True)
+            
+            # Usando URL direta para garantir que a imagem seja carregada corretamente
             st.image("https://cdn.pixabay.com/photo/2015/12/08/00/32/business-1081802_960_720.jpg", width=600)
+            
             st.markdown("<h3>Ser dono do seu próprio negócio é ter o controle da sua jornada. Não é sobre ter um emprego, é sobre construir um legado.</h3>", unsafe_allow_html=True)
             st.markdown("</div>", unsafe_allow_html=True)
 
