@@ -59,9 +59,9 @@ if authenticated:
     authenticator.logout("Logout", "sidebar")
     st.sidebar.success(f"Bem-vindo, {name}!")
 
-    # Menu lateral atualizado
+    # Menu lateral atualizado (nome revertido)
     page = st.sidebar.radio("Navegação", [
-        "Página Inicial",
+        "Filtro de Dispersão",
         "20 Maiores Perdas Operacionais",
         "20 Maiores Perdas em Valor"
     ])
@@ -74,8 +74,8 @@ if authenticated:
     if file:
         df = carregar_planilha(file)
 
-        if page == "Página Inicial":
-            st.markdown("<h2 style='text-align: center;'>📄 Página Inicial</h2>", unsafe_allow_html=True)
+        if page == "Filtro de Dispersão":
+            st.markdown("<h2 style='text-align: center;'>📄 Filtro de Dispersão de Produtos</h2>", unsafe_allow_html=True)
             with st.expander("🔍 Filtros de visualização"):
                 ex_crit = st.checkbox("Exibir Itens Críticos")
                 ex_mensal = st.checkbox("Exibir Itens da Contagem Mensal")
@@ -123,7 +123,7 @@ if authenticated:
             st.markdown("<h2 style='text-align: center;'>📊 Top 20 Maiores Perdas Operacionais</h2>", unsafe_allow_html=True)
             top20 = df.nlargest(20, 'Perda Operacional')
             fig, ax = plt.subplots(figsize=(10,6))
-            bars = ax.barh(top20['Produto'], top20['Perda Operacional'])
+            bars = ax.barh(top20['Produto'], top20['Perda Operacional'], color='salmon')
             ax.invert_yaxis()
             ax.set_xlabel('Perda Operacional (unidades)', fontsize=12)
             ax.set_title('Top 20 Maiores Perdas Operacionais', fontsize=14)
@@ -136,7 +136,7 @@ if authenticated:
             st.markdown("<h2 style='text-align: center;'>📊 Top 20 Maiores Perdas em Valor</h2>", unsafe_allow_html=True)
             top20v = df.nlargest(20, 'Valor da Perda (R$)')
             fig, ax = plt.subplots(figsize=(10,6))
-            bars = ax.barh(top20v['Produto'], top20v['Valor da Perda (R$)'])
+            bars = ax.barh(top20v['Produto'], top20v['Valor da Perda (R$)'], color='salmon')
             ax.invert_yaxis()
             ax.set_xlabel('Valor da Perda (R$)', fontsize=12)
             ax.set_title('Top 20 Maiores Perdas em Valor', fontsize=14)
