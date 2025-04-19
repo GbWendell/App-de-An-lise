@@ -9,12 +9,12 @@ st.markdown("""
     <style>
         body { background-color: #f5f7fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         .main .block-container { padding: 2rem 3rem; background-color: white; border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
-        h1 { font-weight: 700; color: #2c3e50; }
+        h1, h2 { color: #2c3e50; }
         .stButton>button { border-radius: 12px; background-color: #2c3e50; color: white; border: none; padding: 0.6rem 1.2rem; transition: background-color 0.3s; }
         .stButton>button:hover { background-color: #34495e; }
         .stDownloadButton>button { border-radius: 8px; background-color: #16a085; color: white; border: none; padding: 0.5rem 1rem; margin-right: 10px; }
         .stDownloadButton>button:hover { background-color: #138d75; }
-        .footer { position: fixed; bottom: 0; left: 0; width: 100%; background: none; text-align: center; padding: 10px 0; }
+        .footer { position: fixed; bottom: 0; left: 0; width: 100%; text-align: center; padding: 10px 0; }
         .footer span { font-size: 14px; color: grey; }
     </style>
 """, unsafe_allow_html=True)
@@ -39,7 +39,6 @@ def get_color(value, col_name, linha_zerada):
     }
     return mapping.get(col_name, "white")
 
-# Carregar e preparar dados
 @st.cache_data
 def carregar_planilha(file):
     df = pd.read_excel(file, sheet_name="Relatório")
@@ -50,7 +49,6 @@ def carregar_planilha(file):
         "Desp. Comp.": "Desp. Completo", "Desp. Incom.": "Desp. Incompleto"
     }, inplace=True)
     df['SKU'] = df['SKU'].astype(str).str.replace(" ", "")
-    # Converter colunas numéricas
     for col in ["Contagem Inicial","Compras","Vendas","Total","Contagem Atual","Perda Operacional","Valor da Perda (R$)"]:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col].astype(str).str.replace(",", "."), errors='coerce')
@@ -61,25 +59,23 @@ if authenticated:
     authenticator.logout("Logout", "sidebar")
     st.sidebar.success(f"Bem-vindo, {name}!")
 
-    # Menu lateral
+    # Menu lateral atualizado
     page = st.sidebar.radio("Navegação", [
-        "Filtros de Dispersão",
+        "Página Inicial",
         "20 Maiores Perdas Operacionais",
         "20 Maiores Perdas em Valor"
     ])
 
     st.markdown("<h1 style='text-align: center;'>📦 Meu App de Dispersão</h1>", unsafe_allow_html=True)
 
-    # Uploader no meio da página
+    # Envio de planilha no meio da página
     file = st.file_uploader("📁 Envie a planilha de Dispersão (Excel)", type=["xlsx"])
 
-    if not file:
-        st.info("Envie a planilha para iniciar a análise.")
-    else:
+    if file:
         df = carregar_planilha(file)
 
-        # Página de filtros
-        if page == "Filtros de Dispersão":
+        if page == "Página Inicial":
+            st.markdown("<h2 style='text-align: center;'>📄 Página Inicial</h2>", unsafe_allow_html=True)
             with st.expander("🔍 Filtros de visualização"):
                 ex_crit = st.checkbox("Exibir Itens Críticos")
                 ex_mensal = st.checkbox("Exibir Itens da Contagem Mensal")
@@ -108,8 +104,8 @@ if authenticated:
                 df_fin = df_filt[cols].copy()
                 st.success("✅ Tabela filtrada com sucesso!")
                 st.dataframe(df_fin)
-                # Tabela colorida
-                fig, ax = plt.subplots(figsize=(12,4)); ax.axis('off')
+                fig, ax = plt.subplots(figsize=(12,4))
+                ax.axis('off')
                 tbl = ax.table(cellText=df_fin.values, colLabels=df_fin.columns, loc='center', cellLoc='center')
                 tbl.auto_set_font_size(False); tbl.set_fontsize(9); tbl.scale(1.2,1.5)
                 for (i,j), cell in tbl.get_celld().items():
@@ -118,34 +114,37 @@ if authenticated:
                         is_zero = all(v==0 or pd.isna(v) for v in df_fin.iloc[i-1,2:])
                         cell.set_facecolor(get_color(val, df_fin.columns[j], is_zero))
                 st.pyplot(fig)
-                # Downloads
                 buf = io.BytesIO(); df_fin.to_excel(buf, index=False)
                 st.download_button("⬇️ Baixar Excel", buf.getvalue(), file_name="dispersao_filtrada.xlsx")
                 img_buf = io.BytesIO(); fig.savefig(img_buf, format='png', dpi=200)
                 st.download_button("⬇️ Baixar Imagem", img_buf.getvalue(), file_name="tabela_destaque.png")
 
-        # Top 20 perdas operacionais
         elif page == "20 Maiores Perdas Operacionais":
             st.markdown("<h2 style='text-align: center;'>📊 Top 20 Maiores Perdas Operacionais</h2>", unsafe_allow_html=True)
             top20 = df.nlargest(20, 'Perda Operacional')
-            fig, ax = plt.subplots(figsize=(8,6))
-            bars = ax.barh(top20['Produto'], top20['Perda Operacional'], color='salmon')
-            ax.invert_yaxis(); ax.set_xlabel('Perda Operacional (unidades)'); ax.set_title('Top 20 Maiores Perdas Operacionais')
-            # Labels com valores reais
-            ax.bar_label(bars, labels=[f"{v:,.2f}" for v in top20['Perda Operacional']], padding=5)
+            fig, ax = plt.subplots(figsize=(10,6))
+            bars = ax.barh(top20['Produto'], top20['Perda Operacional'])
+            ax.invert_yaxis()
+            ax.set_xlabel('Perda Operacional (unidades)', fontsize=12)
+            ax.set_title('Top 20 Maiores Perdas Operacionais', fontsize=14)
+            ax.grid(axis='x', linestyle='--', alpha=0.7)
+            ax.bar_label(bars, labels=[f"{v:,.0f}" for v in top20['Perda Operacional']], padding=4, fontsize=10)
+            plt.tight_layout()
             st.pyplot(fig)
 
-        # Top 20 perdas em valor
         elif page == "20 Maiores Perdas em Valor":
             st.markdown("<h2 style='text-align: center;'>📊 Top 20 Maiores Perdas em Valor</h2>", unsafe_allow_html=True)
             top20v = df.nlargest(20, 'Valor da Perda (R$)')
-            fig, ax = plt.subplots(figsize=(8,6))
-            bars = ax.barh(top20v['Produto'], top20v['Valor da Perda (R$)'], color='salmon')
-            ax.invert_yaxis(); ax.set_xlabel('Valor da Perda (R$)'); ax.set_title('Top 20 Maiores Perdas em Valor')
-            ax.bar_label(bars, labels=[f"R$ {v:,.2f}" for v in top20v['Valor da Perda (R$)']], padding=5)
+            fig, ax = plt.subplots(figsize=(10,6))
+            bars = ax.barh(top20v['Produto'], top20v['Valor da Perda (R$)'])
+            ax.invert_yaxis()
+            ax.set_xlabel('Valor da Perda (R$)', fontsize=12)
+            ax.set_title('Top 20 Maiores Perdas em Valor', fontsize=14)
+            ax.grid(axis='x', linestyle='--', alpha=0.7)
+            ax.bar_label(bars, labels=[f"R$ {v:,.2f}" for v in top20v['Valor da Perda (R$)']], padding=4, fontsize=10)
+            plt.tight_layout()
             st.pyplot(fig)
 
-    # Rodapé
     st.markdown("<div class='footer'><span>By Gabriel Wendell Menezes Santos</span></div>", unsafe_allow_html=True)
 elif authenticated is False:
     st.error("Usuário ou senha inválidos.")
